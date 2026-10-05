@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.idea/
+.env
+.pytest_cache/
+data/raw/
+data/processed/
+data/crawl-report.json
+data/test-tmp/
+data/qa-check.json
+*.log

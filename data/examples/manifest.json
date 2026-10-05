@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "manuals": [
+    {
+      "key": "synthetic-graph-pipeline-example",
+      "title": "SENTETİK TEST — Toyota Demo (araç bilgisi değildir)",
+      "vehicle": {"make": "Toyota", "model": "Demo", "year": 2024, "market": "Synthetic test"},
+      "language": "en",
+      "source": "",
+      "pages": [
+        {"number": 1, "title": "Test engine oil", "text": "Synthetic pipeline example only. This text mentions engine oil and a battery to validate graph relationships. It contains no real maintenance instructions or values."},
+        {"number": 2, "title": "Test tire", "text": "Synthetic pipeline example only. This page mentions tire pressure and brake fluid for retrieval tests. This is not a Toyota service manual."}
+      ]
+    }
+  ]
+}
