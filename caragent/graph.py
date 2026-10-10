@@ -3,7 +3,7 @@ import re
 
 from neo4j import GraphDatabase
 
-from .models import ChunkingConfig, Manual, components, split_text, stable_id, COMPONENTS
+from .models import ChunkingConfig, Manual, chunks_for_manual, components, stable_id, COMPONENTS
 
 STOP_WORDS = set("a an the is are how what where when to of for and in on do does can i my with please toyota corolla hangi nasıl nasil nedir ne bir ve için icin mı mi mu bu nerede kaç kac var kontrol edilir yapabilirim yapilir yapılır".split())
 
@@ -59,23 +59,23 @@ class GraphStore:
             page_id = stable_id(manual.id, page.number)
             rows.append({"id": page_id, "number": page.number, "title": page.title or manual.title,
                          "url": page.url or manual.source, "images": list(page.images)})
-            previous = None
-            for ordinal, text in enumerate(split_text(page.text, chunking.size, chunking.overlap,
-                                                       chunking.strategy)):
-                chunk_id = stable_id(page_id, ordinal)
-                chunk_rows.append({"id": chunk_id, "page_id": page_id, "ordinal": ordinal,
-                                   "text": text, "title": page.title or manual.title,
-                                   "previous": previous, "components": components(text)})
-                previous = chunk_id
+        previous_by_page = {}
+        for chunk in chunks_for_manual(manual, chunking):
+            previous = previous_by_page.get(chunk.page_id)
+            chunk_rows.append({"id": chunk.id, "page_id": chunk.page_id,
+                               "ordinal": chunk.page_ordinal, "text": chunk.text,
+                               "title": chunk.title, "previous": previous,
+                               "components": components(chunk.text)})
+            previous_by_page[chunk.page_id] = chunk.id
         if not chunk_rows:
             raise ValueError("İçe aktarılabilir metin parçası yok.")
-        content_hash = stable_id(manual.content_hash, chunking.signature)
         with self.driver.session(database=self.settings.database) as session:
-            return session.execute_write(self._write_manual, manual, rows, chunk_rows, content_hash)
+            return session.execute_write(self._write_manual, manual, rows, chunk_rows,
+                                         manual.content_hash_for(chunking))
 
     @staticmethod
     def _write_manual(tx, manual, pages, chunks, content_hash=None):
-        content_hash = content_hash or stable_id(manual.content_hash, ChunkingConfig().signature)
+        content_hash = content_hash or manual.content_hash_for(ChunkingConfig())
         existing = tx.run("MATCH (m:CaragentManual {id:$id}) RETURN m.content_hash AS hash", id=manual.id).single()
         if existing and existing["hash"] == content_hash:
             return {"title": manual.title, "status": "unchanged", "pages": len(pages), "chunks": len(chunks)}

@@ -65,7 +65,7 @@ Varsayılan kök `https://lemon-manuals.la/Toyota/2024/Corolla%20LE/` adresidir.
 
 Tarama `data/crawl-report.json` içinde başarılı sayfa sayısını, süreyi, ağ isteği/retry/cache hit sayılarını, hata oranını ve etkin ayarları raporlar. Ham HTML `data/raw/lemon`, parse edilmiş manifest `data/processed` içinde tutulur. Cache varsayılan olarak 24 saat geçerlidir; `--cache-ttl 0` okumayı kapatır, `--refresh-cache` zorla yeniler. `--timeout`, `--retries`, `--backoff`, `--delay` ve `--concurrency` (1–16) ağ davranışını yönetir. Varsayılan concurrency 1'dir ve robots.txt daha uzun bir gecikme bildirirse o değer uygulanır.
 
-Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Karakter, boşlukla ayrılmış token veya paragraf tabanlı çalışma seçilebilir:
+Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Karakter yöntemi başlık, paragraf, cümle ve işlem adımı sınırlarını mümkün olduğunda korur. Boşlukla ayrılmış token veya paragraf tabanlı çalışma da seçilebilir:
 
 ```powershell
 .\.venv\Scripts\python.exe main.py ingest data/processed/corolla-2024.json --chunk-strategy token --chunk-size 250 --chunk-overlap 40
@@ -78,7 +78,7 @@ Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Ka
 .\.venv\Scripts\python.exe main.py benchmark-chunks data/examples/manifest.json --queries data/examples/benchmark-queries.json
 ```
 
-Ölçüm yöntemi ve önerilen değerler [CAR-5 parametre raporunda](docs/ingest-parameter-report.md) açıklanır.
+Ölçüm yöntemi ve önerilen değerler [CAR-5 parametre raporunda](docs/ingest-parameter-report.md) açıklanır. Her chunk kılavuz, sayfa, kaynak URL, sıra ve araç metadata'sını taşır. Yapısal davranış ve boyut karşılaştırmaları için [chunklama dokümanına](docs/chunking.md) bakın.
 
 Yerel PDF, TXT, MD veya HTML dosyaları için dosyanın yanına manifest koyun:
 
