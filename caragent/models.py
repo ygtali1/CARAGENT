@@ -56,18 +56,72 @@ class Manual:
     @property
     def content_hash(self):
         return stable_id(self.title, self.language, self.source,
-                         *[repr(asdict(p)) for p in self.pages], "chunker-v1-1000-150")
+                         *[repr(asdict(p)) for p in self.pages])
 
 
-def split_text(text: str, size=1000, overlap=150) -> list[str]:
-    if size < 100 or overlap < 0 or overlap >= size:
-        raise ValueError("Parça boyutu en az 100; overlap boyuttan küçük olmalı.")
+@dataclass(frozen=True)
+class ChunkingConfig:
+    strategy: str = "character"
+    size: int = 1000
+    overlap: int = 150
+
+    def __post_init__(self):
+        minimum = {"character": 100, "token": 20, "paragraph": 1}
+        if self.strategy not in minimum:
+            raise ValueError("Chunklama yöntemi character, token veya paragraph olmalı.")
+        if self.size < minimum[self.strategy] or self.overlap < 0 or self.overlap >= self.size:
+            raise ValueError(
+                f"{self.strategy} chunk boyutu en az {minimum[self.strategy]}; "
+                "overlap boyuttan küçük olmalı."
+            )
+
+    @property
+    def signature(self) -> str:
+        return f"chunker-v2-{self.strategy}-{self.size}-{self.overlap}"
+
+
+CHUNK_DEFAULTS = {
+    "character": ChunkingConfig("character", 1000, 150),
+    "token": ChunkingConfig("token", 250, 40),
+    "paragraph": ChunkingConfig("paragraph", 5, 1),
+}
+
+
+def resolve_chunking(strategy="character", size=None, overlap=None) -> ChunkingConfig:
+    default = CHUNK_DEFAULTS.get(strategy)
+    if default is None:
+        raise ValueError("Chunklama yöntemi character, token veya paragraph olmalı.")
+    return ChunkingConfig(strategy, default.size if size is None else size,
+                          default.overlap if overlap is None else overlap)
+
+
+def _window(items: list[str], size: int, overlap: int, joiner: str) -> list[str]:
+    chunks, start = [], 0
+    while start < len(items):
+        piece = joiner.join(items[start:start + size]).strip()
+        if piece:
+            chunks.append(piece)
+        if start + size >= len(items):
+            break
+        start += size - overlap
+    return chunks
+
+
+def split_text(text: str, size=1000, overlap=150, strategy="character") -> list[str]:
+    config = ChunkingConfig(strategy, size, overlap)
     text = normalize(text)
+    if not text:
+        return []
+    if config.strategy == "token":
+        return _window(text.split(), config.size, config.overlap, " ")
+    if config.strategy == "paragraph":
+        paragraphs = [part.strip() for part in re.split(r"\n+", text) if part.strip()]
+        return _window(paragraphs, config.size, config.overlap, "\n")
     chunks, start = [], 0
     while start < len(text):
-        end = min(start + size, len(text))
+        end = min(start + config.size, len(text))
         if end < len(text):
-            boundary = text.rfind(" ", start + size // 2, end)
+            boundary = text.rfind(" ", start + config.size // 2, end)
             if boundary > start:
                 end = boundary
         piece = text[start:end].strip()
@@ -75,7 +129,7 @@ def split_text(text: str, size=1000, overlap=150) -> list[str]:
             chunks.append(piece)
         if end == len(text):
             break
-        start = end - overlap
+        start = end - config.overlap
     return chunks
 
 

@@ -3,7 +3,7 @@ import re
 
 from neo4j import GraphDatabase
 
-from .models import Manual, components, split_text, stable_id, COMPONENTS
+from .models import ChunkingConfig, Manual, components, split_text, stable_id, COMPONENTS
 
 STOP_WORDS = set("a an the is are how what where when to of for and in on do does can i my with please toyota corolla hangi nasıl nasil nedir ne bir ve için icin mı mi mu bu nerede kaç kac var kontrol edilir yapabilirim yapilir yapılır".split())
 
@@ -52,14 +52,16 @@ class GraphStore:
                 OPTIONS {indexConfig: {`fulltext.analyzer`: 'standard-no-stop-words'}}""").consume()
             session.run("CALL db.awaitIndexes(120)").consume()
 
-    def ingest(self, manual: Manual) -> dict:
+    def ingest(self, manual: Manual, chunking: ChunkingConfig | None = None) -> dict:
+        chunking = chunking or ChunkingConfig()
         rows, chunk_rows = [], []
         for page in manual.pages:
             page_id = stable_id(manual.id, page.number)
             rows.append({"id": page_id, "number": page.number, "title": page.title or manual.title,
                          "url": page.url or manual.source, "images": list(page.images)})
             previous = None
-            for ordinal, text in enumerate(split_text(page.text)):
+            for ordinal, text in enumerate(split_text(page.text, chunking.size, chunking.overlap,
+                                                       chunking.strategy)):
                 chunk_id = stable_id(page_id, ordinal)
                 chunk_rows.append({"id": chunk_id, "page_id": page_id, "ordinal": ordinal,
                                    "text": text, "title": page.title or manual.title,
@@ -67,13 +69,15 @@ class GraphStore:
                 previous = chunk_id
         if not chunk_rows:
             raise ValueError("İçe aktarılabilir metin parçası yok.")
+        content_hash = stable_id(manual.content_hash, chunking.signature)
         with self.driver.session(database=self.settings.database) as session:
-            return session.execute_write(self._write_manual, manual, rows, chunk_rows)
+            return session.execute_write(self._write_manual, manual, rows, chunk_rows, content_hash)
 
     @staticmethod
-    def _write_manual(tx, manual, pages, chunks):
+    def _write_manual(tx, manual, pages, chunks, content_hash=None):
+        content_hash = content_hash or stable_id(manual.content_hash, ChunkingConfig().signature)
         existing = tx.run("MATCH (m:CaragentManual {id:$id}) RETURN m.content_hash AS hash", id=manual.id).single()
-        if existing and existing["hash"] == manual.content_hash:
+        if existing and existing["hash"] == content_hash:
             return {"title": manual.title, "status": "unchanged", "pages": len(pages), "chunks": len(chunks)}
         # All replacement mutations live in one transaction. Only this document's nodes are touched.
         tx.run("MATCH (c:CaragentChunk {manual_id:$id}) DETACH DELETE c", id=manual.id).consume()
@@ -83,7 +87,7 @@ class GraphStore:
                 m.language=$language, m.content_hash=$hash, m.updated_at=datetime()
             MERGE (v)-[:HAS_MANUAL]->(m)""", vehicle_id=manual.vehicle.id,
                vehicle=asdict(manual.vehicle), id=manual.id, title=manual.title,
-               source=manual.source, language=manual.language, hash=manual.content_hash).consume()
+               source=manual.source, language=manual.language, hash=content_hash).consume()
         tx.run("""MATCH (m:CaragentManual {id:$id}) UNWIND $pages AS row
             CREATE (p:CaragentPage) SET p += row, p.manual_id=$id
             CREATE (m)-[:HAS_PAGE]->(p)""", id=manual.id, pages=pages).consume()

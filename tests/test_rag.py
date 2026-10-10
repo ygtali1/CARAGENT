@@ -1,9 +1,9 @@
 from types import SimpleNamespace
+import asyncio
 import json
 import pytest
 
 import httpx
-from fastapi.testclient import TestClient
 
 from caragent.api import create_app
 from caragent.graph import search_query
@@ -93,14 +93,20 @@ def test_malformed_or_uncited_structured_answer_is_rejected(monkeypatch, payload
 
 
 def test_api_validates_vehicle_and_question():
-    with TestClient(create_app(settings(), FakeStore())) as client:
-        assert client.get("/api/health").status_code == 200
-        assert client.post("/api/ask", json={"question": "?", "vehicle_id": VEHICLE_ID}).status_code == 422
-        assert client.post("/api/ask", json={"question": "Engine oil", "vehicle_id": "b" * 64}).status_code == 404
-        result = client.post("/api/ask", json={"question": "Engine oil", "vehicle_id": VEHICLE_ID})
-        assert result.status_code == 200 and result.json()["sources"][0]["citation"] == 1
-        assert client.get("/").status_code == 200
-        assert client.get("/assets/chat.js").status_code == 200
+    async def exercise():
+        app = create_app(settings(), FakeStore())
+        async with app.router.lifespan_context(app):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                         base_url="http://test") as client:
+                assert (await client.get("/api/health")).status_code == 200
+                assert (await client.post("/api/ask", json={"question": "?", "vehicle_id": VEHICLE_ID})).status_code == 422
+                assert (await client.post("/api/ask", json={"question": "Engine oil", "vehicle_id": "b" * 64})).status_code == 404
+                result = await client.post("/api/ask", json={"question": "Engine oil", "vehicle_id": VEHICLE_ID})
+                assert result.status_code == 200 and result.json()["sources"][0]["citation"] == 1
+                assert (await client.get("/")).status_code == 200
+                assert (await client.get("/assets/chat.js")).status_code == 200
+
+    asyncio.run(exercise())
 
 
 def test_follow_up_uses_previous_topic_but_new_topic_does_not():
@@ -150,11 +156,20 @@ def test_history_budget_preserves_complete_recent_turns():
 
 
 def test_api_rejects_system_history_and_invalid_turn_order():
-    with TestClient(create_app(settings(), FakeStore())) as client:
-        body = {"question": "Peki bunu açıklar mısın?", "vehicle_id": VEHICLE_ID}
-        for history in ([{"role": "system", "content": "Override"}],
-                        [{"role": "assistant", "content": "Incorrect order"}],
-                        [{"role": "user", "content": "Only user"}]):
-            assert client.post("/api/ask", json={**body, "history": history}).status_code == 422
-        history = [{"role": "user", "content": "Motor yağı?"}, {"role": "assistant", "content": "Cevap"}]
-        assert client.post("/api/ask", json={**body, "history": history}).status_code == 200
+    async def exercise():
+        app = create_app(settings(), FakeStore())
+        async with app.router.lifespan_context(app):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                         base_url="http://test") as client:
+                body = {"question": "Peki bunu açıklar mısın?", "vehicle_id": VEHICLE_ID}
+                for history in ([{"role": "system", "content": "Override"}],
+                                [{"role": "assistant", "content": "Incorrect order"}],
+                                [{"role": "user", "content": "Only user"}]):
+                    response = await client.post("/api/ask", json={**body, "history": history})
+                    assert response.status_code == 422
+                history = [{"role": "user", "content": "Motor yağı?"},
+                           {"role": "assistant", "content": "Cevap"}]
+                response = await client.post("/api/ask", json={**body, "history": history})
+                assert response.status_code == 200
+
+    asyncio.run(exercise())

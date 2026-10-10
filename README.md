@@ -55,14 +55,30 @@ RETURN p LIMIT 50;
 
 ## Başka Toyota kılavuzları eklemek
 
-Lemon'da bir modelin `Repair and Diagnosis` URL'sini kullanın. İstek ve sayfa sayısı sınırlıdır; önce küçük bir veri setiyle başlayın:
+Toyota Corolla LE 2024 araç kökünün altındaki tüm erişilebilir Lemon bölümlerini parse etmek için `--all` kullanın. Bu işlem Neo4j gerektirmez; ham HTML cache'i ve parse edilmiş JSON manifesti üretir:
 
 ```powershell
-.\.venv\Scripts\python.exe main.py crawl --url "https://lemon-manuals.la/Toyota/2024/Corolla%20LE/Repair%20and%20Diagnosis/" --pages 30 --requests 150 --output data/processed/corolla-2024.json
-.\.venv\Scripts\python.exe main.py ingest data/processed/corolla-2024.json
+.\.venv\Scripts\python.exe main.py crawl --all --output data/processed/toyota-corolla-le-2024.json
 ```
 
-Tarama `data/crawl-report.json` içinde başarılı sayfa sayısını, hataları ve kapsamın sınırlandırılıp sınırlandırılmadığını raporlar. Ham HTML `data/raw/lemon`, manifest `data/processed` içinde tutulur. Komutu yeniden çalıştırınca indirilen HTML önbelleği kullanılır. İçe aktarma değişmeyen belgeleri tekrar oluşturmaz. Varsayılan tarama bütün siteyi indirmez.
+Varsayılan kök `https://lemon-manuals.la/Toyota/2024/Corolla%20LE/` adresidir. Normal `crawl` güvenlik amacıyla sayfa/ziyaret sınırı kullanır; `--all` bu iki sınırı kaldırır ve araç kökündeki kuyruk bitene kadar `Repair and Diagnosis`, `Labor Times` ve erişilebilen diğer dizinleri gezer. Aynı içeriğin toplu kopyası olan `Repair and Diagnosis (Single Page)` bilinçli olarak dışarıda bırakılır. Manifestteki `crawl.complete` yalnız kuyruk hatasız bittiğinde `true` olur.
+
+Tarama `data/crawl-report.json` içinde başarılı sayfa sayısını, süreyi, ağ isteği/retry/cache hit sayılarını, hata oranını ve etkin ayarları raporlar. Ham HTML `data/raw/lemon`, parse edilmiş manifest `data/processed` içinde tutulur. Cache varsayılan olarak 24 saat geçerlidir; `--cache-ttl 0` okumayı kapatır, `--refresh-cache` zorla yeniler. `--timeout`, `--retries`, `--backoff`, `--delay` ve `--concurrency` (1–16) ağ davranışını yönetir. Varsayılan concurrency 1'dir ve robots.txt daha uzun bir gecikme bildirirse o değer uygulanır.
+
+Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Karakter, boşlukla ayrılmış token veya paragraf tabanlı çalışma seçilebilir:
+
+```powershell
+.\.venv\Scripts\python.exe main.py ingest data/processed/corolla-2024.json --chunk-strategy token --chunk-size 250 --chunk-overlap 40
+.\.venv\Scripts\python.exe main.py ingest data/processed/corolla-2024.json --chunk-strategy paragraph --chunk-size 5 --chunk-overlap 1
+```
+
+Üç varsayılan profili Neo4j gerektirmeden karşılaştırmak için:
+
+```powershell
+.\.venv\Scripts\python.exe main.py benchmark-chunks data/examples/manifest.json --queries data/examples/benchmark-queries.json
+```
+
+Ölçüm yöntemi ve önerilen değerler [CAR-5 parametre raporunda](docs/ingest-parameter-report.md) açıklanır.
 
 Yerel PDF, TXT, MD veya HTML dosyaları için dosyanın yanına manifest koyun:
 
