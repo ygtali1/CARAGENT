@@ -1,0 +1,677 @@
+{
+  "schema_version": "caragent-extraction-v1",
+  "extractor": {
+    "mode": "rules",
+    "ollama_url": "http://127.0.0.1:11434",
+    "model": "qwen2.5:3b",
+    "temperature": 0.0,
+    "timeout": 180.0
+  },
+  "chunks": [
+    {
+      "schema_version": "caragent-extraction-v1",
+      "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+      "manual_id": "af6b491fc31cc0c0d00c22fff43ca6e74d20e4c522aaf8205ef842f55fe0a16a",
+      "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+      "page_number": 1,
+      "source": "synthetic://caragent/CAR-8/1",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "extractor": {
+        "name": "caragent-rules",
+        "version": "1.0.0",
+        "mode": "rules",
+        "parameters": {
+          "language": "tr+en"
+        }
+      },
+      "entities": [
+        {
+          "id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac",
+          "type": "component",
+          "name": "engine",
+          "normalized_name": "engine",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "engine"
+            }
+          ]
+        },
+        {
+          "id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+          "type": "component",
+          "name": "engine oil",
+          "normalized_name": "engine oil",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "engine oil"
+            }
+          ]
+        },
+        {
+          "id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+          "type": "maintenance_action",
+          "name": "inspect",
+          "normalized_name": "inspect",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "Check"
+            }
+          ]
+        },
+        {
+          "id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94",
+          "type": "technical_value",
+          "name": "35 psi",
+          "normalized_name": "35 psi",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "35 psi"
+            }
+          ]
+        },
+        {
+          "id": "56cd9fb7c3c0a2f4a4188686d7d329a9a774b0354842da41887b9ca2acf80194",
+          "type": "warning",
+          "name": "WARNING: Do not touch the engine when hot.",
+          "normalized_name": "warning do not touch the engine when hot.",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "WARNING: Do not touch the engine when hot."
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "80c90aa31238022e43d7ed03cdfa457a7e5bc4e0160f97f168fb2f2901a15fe9",
+          "type": "applies_to",
+          "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+          "target_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+          "confidence": 1.0,
+          "status": "verified",
+          "properties": {},
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "Check the engine oil at 35 psi."
+            }
+          ]
+        },
+        {
+          "id": "87038debfc5dcba8418dafbf08010959d88d578d11cdf4f8ea4bdd3f1306b80b",
+          "type": "has_value",
+          "source_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+          "target_entity_id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94",
+          "confidence": 1.0,
+          "status": "verified",
+          "properties": {
+            "raw_value": "35 psi"
+          },
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "Check the engine oil at 35 psi."
+            }
+          ]
+        },
+        {
+          "id": "818f6f78e41325d3f31c055ad35359dfbbda20c1980e948793ea56d83a6a5c81",
+          "type": "warns_about",
+          "source_entity_id": "56cd9fb7c3c0a2f4a4188686d7d329a9a774b0354842da41887b9ca2acf80194",
+          "target_entity_id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac",
+          "confidence": 1.0,
+          "status": "verified",
+          "properties": {},
+          "evidence": [
+            {
+              "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+              "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+              "page_number": 1,
+              "source": "synthetic://caragent/CAR-8/1",
+              "quote": "WARNING: Do not touch the engine when hot."
+            }
+          ]
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "schema_version": "caragent-extraction-v1",
+      "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+      "manual_id": "af6b491fc31cc0c0d00c22fff43ca6e74d20e4c522aaf8205ef842f55fe0a16a",
+      "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+      "page_number": 2,
+      "source": "synthetic://caragent/CAR-8/2",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "extractor": {
+        "name": "caragent-rules",
+        "version": "1.0.0",
+        "mode": "rules",
+        "parameters": {
+          "language": "tr+en"
+        }
+      },
+      "entities": [
+        {
+          "id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662",
+          "type": "component",
+          "name": "battery",
+          "normalized_name": "battery",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Aküyü"
+            }
+          ]
+        },
+        {
+          "id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+          "type": "component",
+          "name": "brake",
+          "normalized_name": "brake",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Fren"
+            }
+          ]
+        },
+        {
+          "id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+          "type": "maintenance_action",
+          "name": "inspect",
+          "normalized_name": "inspect",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "kontrol edin"
+            }
+          ]
+        },
+        {
+          "id": "2630d66a0cf5b23fc61bfc22e4b0b896a7d10f828ae6959c6da23a313837358a",
+          "type": "maintenance_action",
+          "name": "replace",
+          "normalized_name": "replace",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "değiştirin"
+            }
+          ]
+        },
+        {
+          "id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7",
+          "type": "system",
+          "name": "brake system",
+          "normalized_name": "brake system",
+          "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+          "vehicle_model": "Evaluation Fixture",
+          "vehicle_year": 2024,
+          "confidence": 1.0,
+          "status": "verified",
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Fren sistemini"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "33b2a7f12f100e5a1269ab2daf11785b49b907b8353d5a88ec6f13343420b376",
+          "type": "applies_to",
+          "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+          "target_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+          "confidence": 1.0,
+          "status": "verified",
+          "properties": {},
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Fren sistemini kontrol edin."
+            }
+          ]
+        },
+        {
+          "id": "c140fbe3839aa76ce24892424d339ac4d464e704f048cbc7a169016c319b3055",
+          "type": "part_of",
+          "source_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+          "target_entity_id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7",
+          "confidence": 0.6,
+          "status": "needs_review",
+          "properties": {},
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Fren sistemini kontrol edin."
+            }
+          ]
+        },
+        {
+          "id": "d671ea7165bc060111fa327b2ee91e8e39896657fba5c2f4c9095a4bc302aa89",
+          "type": "applies_to",
+          "source_entity_id": "2630d66a0cf5b23fc61bfc22e4b0b896a7d10f828ae6959c6da23a313837358a",
+          "target_entity_id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662",
+          "confidence": 1.0,
+          "status": "verified",
+          "properties": {},
+          "evidence": [
+            {
+              "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+              "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+              "page_number": 2,
+              "source": "synthetic://caragent/CAR-8/2",
+              "quote": "Aküyü değiştirin."
+            }
+          ]
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "entities": [
+    {
+      "id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662",
+      "type": "component",
+      "name": "battery",
+      "normalized_name": "battery",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Aküyü"
+        }
+      ]
+    },
+    {
+      "id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+      "type": "component",
+      "name": "brake",
+      "normalized_name": "brake",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Fren"
+        }
+      ]
+    },
+    {
+      "id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac",
+      "type": "component",
+      "name": "engine",
+      "normalized_name": "engine",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "engine"
+        }
+      ]
+    },
+    {
+      "id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+      "type": "component",
+      "name": "engine oil",
+      "normalized_name": "engine oil",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "engine oil"
+        }
+      ]
+    },
+    {
+      "id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "type": "maintenance_action",
+      "name": "inspect",
+      "normalized_name": "inspect",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "Check"
+        },
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "kontrol edin"
+        }
+      ]
+    },
+    {
+      "id": "2630d66a0cf5b23fc61bfc22e4b0b896a7d10f828ae6959c6da23a313837358a",
+      "type": "maintenance_action",
+      "name": "replace",
+      "normalized_name": "replace",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "değiştirin"
+        }
+      ]
+    },
+    {
+      "id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7",
+      "type": "system",
+      "name": "brake system",
+      "normalized_name": "brake system",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Fren sistemini"
+        }
+      ]
+    },
+    {
+      "id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94",
+      "type": "technical_value",
+      "name": "35 psi",
+      "normalized_name": "35 psi",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "35 psi"
+        }
+      ]
+    },
+    {
+      "id": "56cd9fb7c3c0a2f4a4188686d7d329a9a774b0354842da41887b9ca2acf80194",
+      "type": "warning",
+      "name": "WARNING: Do not touch the engine when hot.",
+      "normalized_name": "warning do not touch the engine when hot.",
+      "vehicle_id": "e6360c9e6ebd9a12d6766da85ea85b4ebba93eb99e4df9b300caecab33438c33",
+      "vehicle_model": "Evaluation Fixture",
+      "vehicle_year": 2024,
+      "confidence": 1.0,
+      "status": "verified",
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "WARNING: Do not touch the engine when hot."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "33b2a7f12f100e5a1269ab2daf11785b49b907b8353d5a88ec6f13343420b376",
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+      "confidence": 1.0,
+      "status": "verified",
+      "properties": {},
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Fren sistemini kontrol edin."
+        }
+      ]
+    },
+    {
+      "id": "80c90aa31238022e43d7ed03cdfa457a7e5bc4e0160f97f168fb2f2901a15fe9",
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+      "confidence": 1.0,
+      "status": "verified",
+      "properties": {},
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "Check the engine oil at 35 psi."
+        }
+      ]
+    },
+    {
+      "id": "d671ea7165bc060111fa327b2ee91e8e39896657fba5c2f4c9095a4bc302aa89",
+      "type": "applies_to",
+      "source_entity_id": "2630d66a0cf5b23fc61bfc22e4b0b896a7d10f828ae6959c6da23a313837358a",
+      "target_entity_id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662",
+      "confidence": 1.0,
+      "status": "verified",
+      "properties": {},
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Aküyü değiştirin."
+        }
+      ]
+    },
+    {
+      "id": "87038debfc5dcba8418dafbf08010959d88d578d11cdf4f8ea4bdd3f1306b80b",
+      "type": "has_value",
+      "source_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+      "target_entity_id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94",
+      "confidence": 1.0,
+      "status": "verified",
+      "properties": {
+        "raw_value": "35 psi"
+      },
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "Check the engine oil at 35 psi."
+        }
+      ]
+    },
+    {
+      "id": "c140fbe3839aa76ce24892424d339ac4d464e704f048cbc7a169016c319b3055",
+      "type": "part_of",
+      "source_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+      "target_entity_id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7",
+      "confidence": 0.6,
+      "status": "needs_review",
+      "properties": {},
+      "evidence": [
+        {
+          "chunk_id": "32b66ecee0a201cb118757cf5807cba91f2599b63fb081af3015e0cf2066ee63",
+          "page_id": "de9f45c8e12271c4255f324cd663a42468970d9f8abf070a77368a09e6cecb10",
+          "page_number": 2,
+          "source": "synthetic://caragent/CAR-8/2",
+          "quote": "Fren sistemini kontrol edin."
+        }
+      ]
+    },
+    {
+      "id": "818f6f78e41325d3f31c055ad35359dfbbda20c1980e948793ea56d83a6a5c81",
+      "type": "warns_about",
+      "source_entity_id": "56cd9fb7c3c0a2f4a4188686d7d329a9a774b0354842da41887b9ca2acf80194",
+      "target_entity_id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac",
+      "confidence": 1.0,
+      "status": "verified",
+      "properties": {},
+      "evidence": [
+        {
+          "chunk_id": "9747a538d532f4bf7ceacd4d522696e6cc1fe8601baefe23f3ad4ccacd283ba3",
+          "page_id": "acff1a0ac6460b2246dd43b275f8f9b51ec60ede34b39426ce6b180e1dff289e",
+          "page_number": 1,
+          "source": "synthetic://caragent/CAR-8/1",
+          "quote": "WARNING: Do not touch the engine when hot."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "chunks": 2,
+    "entities": 9,
+    "relationships": 6,
+    "warnings": 0
+  }
+}

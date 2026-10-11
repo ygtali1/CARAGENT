@@ -1,0 +1,46 @@
+{
+  "description": "Human-labelled synthetic CAR-8 fixture; not vehicle guidance.",
+  "entities": [
+    {"type": "component", "normalized_name": "battery"},
+    {"type": "component", "normalized_name": "brake"},
+    {"type": "component", "normalized_name": "engine"},
+    {"type": "component", "normalized_name": "engine oil"},
+    {"type": "maintenance_action", "normalized_name": "inspect"},
+    {"type": "maintenance_action", "normalized_name": "replace"},
+    {"type": "system", "normalized_name": "brake system"},
+    {"type": "technical_value", "normalized_name": "35 psi"},
+    {"type": "warning", "normalized_name": "warning do not touch the engine when hot."}
+  ],
+  "relationships": [
+    {
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4"
+    },
+    {
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664"
+    },
+    {
+      "type": "applies_to",
+      "source_entity_id": "2630d66a0cf5b23fc61bfc22e4b0b896a7d10f828ae6959c6da23a313837358a",
+      "target_entity_id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662"
+    },
+    {
+      "type": "has_value",
+      "source_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+      "target_entity_id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94"
+    },
+    {
+      "type": "part_of",
+      "source_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4",
+      "target_entity_id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7"
+    },
+    {
+      "type": "warns_about",
+      "source_entity_id": "56cd9fb7c3c0a2f4a4188686d7d329a9a774b0354842da41887b9ca2acf80194",
+      "target_entity_id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac"
+    }
+  ]
+}

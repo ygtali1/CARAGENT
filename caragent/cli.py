@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -10,9 +11,11 @@ import httpx
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
 from .config import ROOT, Settings, configure
+from .entity_extractor import (EntityExtractor, ExtractorConfig, evaluate_extraction,
+                               extract_chunks)
 from .graph import GraphStore
 from .ingest import DEFAULT_LEMON_URL, crawl_lemon, read_manifest
-from .models import resolve_chunking
+from .models import chunks_for_manual, resolve_chunking
 from .rag import ask
 from .tuning import compare_chunking
 
@@ -90,6 +93,17 @@ def main(argv=None):
     benchmark.add_argument("--queries", type=Path,
                            help="query, expected_phrase ve isteğe bağlı manual_key içeren JSON listesi")
     benchmark.add_argument("--output", type=Path, default=ROOT / "data" / "chunk-benchmark.json")
+    extract = subs.add_parser("extract", help="Manifest chunk'larından entity ve relationship çıkar")
+    extract.add_argument("manifest", type=Path)
+    extract.add_argument("--output", type=Path,
+                         default=ROOT / "data" / "processed" / "entity-extraction.json")
+    extract.add_argument("--mode", choices=["rules", "ollama"], default="rules")
+    extract.add_argument("--ollama-url", default=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"))
+    extract.add_argument("--model", default=os.getenv("OLLAMA_MODEL", "qwen2.5:3b"))
+    add_chunk_options(extract)
+    evaluate = subs.add_parser("evaluate-extraction", help="Etiketli extraction sonucunu ölç")
+    evaluate.add_argument("predicted", type=Path)
+    evaluate.add_argument("expected", type=Path)
     subs.add_parser("stats")
     subs.add_parser("vehicles")
     llm = subs.add_parser("enable-llm", help="Yerel Ollama başlat, modeli indir ve Türkçe yanıtları etkinleştir")
@@ -120,6 +134,22 @@ def main(argv=None):
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
             output({**report, "output": str(args.output)})
+            return 0
+        if args.command == "extract":
+            manuals = read_manifest(args.manifest.resolve())
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            chunks = [chunk for manual in manuals for chunk in chunks_for_manual(manual, chunking)]
+            extractor = EntityExtractor(ExtractorConfig(
+                mode=args.mode, ollama_url=args.ollama_url, model=args.model))
+            report = extract_chunks(chunks, extractor)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            output({"output": str(args.output), **report["summary"]})
+            return 0
+        if args.command == "evaluate-extraction":
+            predicted = json.loads(args.predicted.read_text(encoding="utf-8"))
+            expected = json.loads(args.expected.read_text(encoding="utf-8"))
+            output(evaluate_extraction(predicted, expected))
             return 0
         if args.command == "enable-llm":
             path = configure()

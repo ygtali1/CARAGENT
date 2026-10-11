@@ -80,6 +80,14 @@ Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Ka
 
 Ölçüm yöntemi ve önerilen değerler [CAR-5 parametre raporunda](docs/ingest-parameter-report.md) açıklanır. Her chunk kılavuz, sayfa, kaynak URL, sıra ve araç metadata'sını taşır. Yapısal davranış ve boyut karşılaştırmaları için [chunklama dokümanına](docs/chunking.md) bakın.
 
+Chunk'lardan kaynakla doğrulanmış entity ve relationship JSON'u üretmek için:
+
+```powershell
+.\.venv\Scripts\python.exe main.py extract data/processed/toyota-corolla-le-2024.json --mode rules
+```
+
+Kurallı ve Ollama tabanlı extraction, JSON şeması, normalizasyon ve kalite ölçümü [entity extraction dokümanında](docs/entity-extraction.md) açıklanır. Bu aşama Neo4j'ye domain node'u yazmaz.
+
 Yerel PDF, TXT, MD veya HTML dosyaları için dosyanın yanına manifest koyun:
 
 ```json
