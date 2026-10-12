@@ -1,4 +1,5 @@
 import argparse
+from dataclasses import asdict
 import json
 import os
 import subprocess
@@ -88,6 +89,11 @@ def main(argv=None):
     ingest = subs.add_parser("ingest", help="JSON manifesti graph'a aktar")
     ingest.add_argument("manifest", type=Path)
     add_chunk_options(ingest)
+    chunk = subs.add_parser("chunk", help="Manifesti Neo4j olmadan chunk JSON'una dönüştür")
+    chunk.add_argument("manifest", type=Path)
+    chunk.add_argument("--output", type=Path,
+                       default=ROOT / "data" / "processed" / "chunks.json")
+    add_chunk_options(chunk)
     benchmark = subs.add_parser("benchmark-chunks", help="Üç chunklama profilini çevrimdışı karşılaştır")
     benchmark.add_argument("manifest", type=Path)
     benchmark.add_argument("--queries", type=Path,
@@ -134,6 +140,19 @@ def main(argv=None):
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
             output({**report, "output": str(args.output)})
+            return 0
+        if args.command == "chunk":
+            manuals = read_manifest(args.manifest.resolve())
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            chunks = [asdict(chunk) for manual in manuals
+                      for chunk in chunks_for_manual(manual, chunking)]
+            payload = {"schema_version": 1, "chunking": asdict(chunking),
+                       "chunks": chunks,
+                       "summary": {"manuals": len(manuals), "chunks": len(chunks)}}
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2),
+                                   encoding="utf-8")
+            output({"output": str(args.output), **payload["summary"]})
             return 0
         if args.command == "extract":
             manuals = read_manifest(args.manifest.resolve())
