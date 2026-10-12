@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "manuals": [
+    {
+      "key": "synthetic-extraction-evaluation",
+      "title": "SENTETİK ENTITY EXTRACTION TESTİ — Araç bilgisi değildir",
+      "vehicle": {
+        "make": "Toyota",
+        "model": "Evaluation Fixture",
+        "year": 2024,
+        "market": "Synthetic test"
+      },
+      "language": "tr+en",
+      "source": "synthetic://caragent/CAR-8",
+      "pages": [
+        {
+          "number": 1,
+          "title": "English fixture",
+          "url": "synthetic://caragent/CAR-8/1",
+          "text": "Check the engine oil at 35 psi. WARNING: Do not touch the engine when hot."
+        },
+        {
+          "number": 2,
+          "title": "Türkçe fixture",
+          "url": "synthetic://caragent/CAR-8/2",
+          "text": "Fren sistemini kontrol edin. Aküyü değiştirin."
+        }
+      ]
+    }
+  ]
+}

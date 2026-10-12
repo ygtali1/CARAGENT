@@ -1,5 +1,7 @@
 import argparse
+from dataclasses import asdict
 import json
+import os
 import subprocess
 import sys
 import time
@@ -10,13 +12,49 @@ import httpx
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
 from .config import ROOT, Settings, configure
-from .graph import GraphStore
+from .entity_extractor import (EntityExtractor, ExtractorConfig, evaluate_extraction,
+                               extract_chunks)
+from .graph import GraphStore, GraphStoreError
 from .ingest import DEFAULT_LEMON_URL, crawl_lemon, read_manifest
+from .models import chunks_for_manual, resolve_chunking
 from .rag import ask
+from .tuning import compare_chunking
 
 
 def output(value):
     print(json.dumps(value, ensure_ascii=False, indent=2))
+
+
+def add_crawl_options(parser):
+    parser.add_argument("--pages", type=int, default=12)
+    parser.add_argument("--requests", type=int, default=80)
+    parser.add_argument("--all", action="store_true",
+                        help="Araç kökü altındaki kuyruk bitene kadar tara; pages/requests sınırlarını kaldırır")
+    parser.add_argument("--delay", type=float, default=1.0)
+    parser.add_argument("--timeout", type=float, default=45.0)
+    parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument("--backoff", type=float, default=1.0)
+    parser.add_argument("--cache-ttl", type=float, default=86_400.0,
+                        help="Ham HTML cache süresi (saniye); 0 cache okumayı kapatır")
+    parser.add_argument("--refresh-cache", action="store_true")
+    parser.add_argument("--concurrency", type=int, default=1)
+
+
+def add_chunk_options(parser):
+    parser.add_argument("--chunk-strategy", choices=["character", "token", "paragraph"],
+                        default="character")
+    parser.add_argument("--chunk-size", type=int,
+                        help="Yönteme göre karakter, token veya paragraf sayısı")
+    parser.add_argument("--chunk-overlap", type=int,
+                        help="Yönteme göre örtüşen karakter, token veya paragraf sayısı")
+
+
+def crawl_arguments(args):
+    return {"max_pages": 0 if args.all else args.pages,
+            "max_requests": 0 if args.all else args.requests, "delay": args.delay,
+            "timeout": args.timeout, "retries": args.retries, "backoff": args.backoff,
+            "cache_ttl": args.cache_ttl, "refresh_cache": args.refresh_cache,
+            "concurrency": args.concurrency}
 
 
 def wait_for_database(store, timeout=180):
@@ -26,7 +64,7 @@ def wait_for_database(store, timeout=180):
             store.verify()
             store.initialize()
             return
-        except (ServiceUnavailable, Neo4jError, OSError):
+        except (GraphStoreError, ServiceUnavailable, Neo4jError, OSError):
             if time.monotonic() >= end:
                 raise ValueError("Neo4j hazır olmadı. docker compose logs neo4j ile durumu kontrol edin.")
             time.sleep(3)
@@ -40,17 +78,48 @@ def main(argv=None):
     subs = parser.add_subparsers(dest="command")
     subs.add_parser("configure", help=".env dosyası ve rastgele yerel parola oluştur")
     setup = subs.add_parser("setup", help="Neo4j başlat, şemayı oluştur ve Toyota sayfalarını içe aktar")
-    setup.add_argument("--pages", type=int, default=12)
     setup.add_argument("--url", default=DEFAULT_LEMON_URL)
+    add_crawl_options(setup)
+    add_chunk_options(setup)
     subs.add_parser("init", help="Mevcut Neo4j veritabanında graph şemasını oluştur")
     crawl = subs.add_parser("crawl", help="Lemon Manuals Toyota sayfalarını indir")
     crawl.add_argument("--url", default=DEFAULT_LEMON_URL)
-    crawl.add_argument("--pages", type=int, default=12)
-    crawl.add_argument("--requests", type=int, default=80)
-    crawl.add_argument("--delay", type=float, default=1.0)
     crawl.add_argument("--output", type=Path)
+    add_crawl_options(crawl)
     ingest = subs.add_parser("ingest", help="JSON manifesti graph'a aktar")
     ingest.add_argument("manifest", type=Path)
+    add_chunk_options(ingest)
+    ingest_extraction = subs.add_parser(
+        "ingest-extraction", help="Extraction JSON'unu doğrulayıp graph'a aktar")
+    ingest_extraction.add_argument("extraction", type=Path)
+    ingest_extraction.add_argument("--batch-size", type=int, default=500)
+    rebuild = subs.add_parser(
+        "rebuild-graph", help="CARAGENT graph'ını manifest ve extraction çıktısından yeniden kur")
+    rebuild.add_argument("manifest", type=Path)
+    rebuild.add_argument("extraction", type=Path)
+    rebuild.add_argument("--batch-size", type=int, default=500)
+    add_chunk_options(rebuild)
+    chunk = subs.add_parser("chunk", help="Manifesti Neo4j olmadan chunk JSON'una dönüştür")
+    chunk.add_argument("manifest", type=Path)
+    chunk.add_argument("--output", type=Path,
+                       default=ROOT / "data" / "processed" / "chunks.json")
+    add_chunk_options(chunk)
+    benchmark = subs.add_parser("benchmark-chunks", help="Üç chunklama profilini çevrimdışı karşılaştır")
+    benchmark.add_argument("manifest", type=Path)
+    benchmark.add_argument("--queries", type=Path,
+                           help="query, expected_phrase ve isteğe bağlı manual_key içeren JSON listesi")
+    benchmark.add_argument("--output", type=Path, default=ROOT / "data" / "chunk-benchmark.json")
+    extract = subs.add_parser("extract", help="Manifest chunk'larından entity ve relationship çıkar")
+    extract.add_argument("manifest", type=Path)
+    extract.add_argument("--output", type=Path,
+                         default=ROOT / "data" / "processed" / "entity-extraction.json")
+    extract.add_argument("--mode", choices=["rules", "ollama"], default="rules")
+    extract.add_argument("--ollama-url", default=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"))
+    extract.add_argument("--model", default=os.getenv("OLLAMA_MODEL", "qwen2.5:3b"))
+    add_chunk_options(extract)
+    evaluate = subs.add_parser("evaluate-extraction", help="Etiketli extraction sonucunu ölç")
+    evaluate.add_argument("predicted", type=Path)
+    evaluate.add_argument("expected", type=Path)
     subs.add_parser("stats")
     subs.add_parser("vehicles")
     llm = subs.add_parser("enable-llm", help="Yerel Ollama başlat, modeli indir ve Türkçe yanıtları etkinleştir")
@@ -70,7 +139,46 @@ def main(argv=None):
             print(configure())
             return 0
         if args.command == "crawl":
-            output(crawl_lemon(args.url, args.pages, args.requests, args.delay, args.output))
+            output(crawl_lemon(args.url, output=args.output, **crawl_arguments(args)))
+            return 0
+        if args.command == "benchmark-chunks":
+            manuals = read_manifest(args.manifest.resolve())
+            cases = json.loads(args.queries.read_text(encoding="utf-8")) if args.queries else []
+            if not isinstance(cases, list):
+                raise ValueError("Benchmark sorguları bir JSON listesi olmalı.")
+            report = compare_chunking(manuals, cases)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            output({**report, "output": str(args.output)})
+            return 0
+        if args.command == "chunk":
+            manuals = read_manifest(args.manifest.resolve())
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            chunks = [asdict(chunk) for manual in manuals
+                      for chunk in chunks_for_manual(manual, chunking)]
+            payload = {"schema_version": 1, "chunking": asdict(chunking),
+                       "chunks": chunks,
+                       "summary": {"manuals": len(manuals), "chunks": len(chunks)}}
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2),
+                                   encoding="utf-8")
+            output({"output": str(args.output), **payload["summary"]})
+            return 0
+        if args.command == "extract":
+            manuals = read_manifest(args.manifest.resolve())
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            chunks = [chunk for manual in manuals for chunk in chunks_for_manual(manual, chunking)]
+            extractor = EntityExtractor(ExtractorConfig(
+                mode=args.mode, ollama_url=args.ollama_url, model=args.model))
+            report = extract_chunks(chunks, extractor)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            output({"output": str(args.output), **report["summary"]})
+            return 0
+        if args.command == "evaluate-extraction":
+            predicted = json.loads(args.predicted.read_text(encoding="utf-8"))
+            expected = json.loads(args.expected.read_text(encoding="utf-8"))
+            output(evaluate_extraction(predicted, expected))
             return 0
         if args.command == "enable-llm":
             path = configure()
@@ -98,19 +206,41 @@ def main(argv=None):
         if args.command == "init":
             print("Neo4j graph şeması hazır.")
         elif args.command == "setup":
-            report = crawl_lemon(args.url, args.pages)
+            report = crawl_lemon(args.url, **crawl_arguments(args))
             output(report)
             manuals = read_manifest(Path(report["manifest"]))
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
             for manual in manuals:
-                output(store.ingest(manual))
+                output(store.ingest(manual, chunking))
             output(store.stats())
             print("Hazır. Ekran için: python main.py serve")
         elif args.command == "ingest":
             # Validate the complete manifest before mutating any document.
             manuals = read_manifest(args.manifest.resolve())
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
             store.initialize()
             for manual in manuals:
-                output(store.ingest(manual))
+                output(store.ingest(manual, chunking))
+        elif args.command == "ingest-extraction":
+            payload = json.loads(args.extraction.resolve().read_text(encoding="utf-8"))
+            store.initialize()
+            output(store.ingest_extraction(payload, batch_size=args.batch_size))
+        elif args.command == "rebuild-graph":
+            manuals = read_manifest(args.manifest.resolve())
+            payload = json.loads(args.extraction.resolve().read_text(encoding="utf-8"))
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            # Validate schema and every evidence pointer before deleting the current graph.
+            store.validate_extraction_sources(payload, manuals, chunking)
+            reset_report = store.reset()
+            totals = {"manuals": 0, "pages": 0, "chunks": 0}
+            for manual in manuals:
+                report = store.ingest(manual, chunking)
+                totals["manuals"] += 1
+                totals["pages"] += report["pages"]
+                totals["chunks"] += report["chunks"]
+            extraction_report = store.ingest_extraction(payload, batch_size=args.batch_size)
+            output({**reset_report, **totals, "extraction": extraction_report,
+                    "stats": store.stats()})
         elif args.command == "stats":
             output(store.stats())
         elif args.command == "vehicles":
@@ -120,7 +250,8 @@ def main(argv=None):
                 raise ValueError("Araç id bulunamadı. python main.py vehicles çıktısını kullanın.")
             output(ask(store, settings, args.question, args.vehicle, mode=args.mode))
         return 0
-    except (ValueError, OSError, KeyError, httpx.HTTPError, Neo4jError, ServiceUnavailable, subprocess.CalledProcessError) as exc:
+    except (ValueError, OSError, KeyError, httpx.HTTPError, GraphStoreError,
+            Neo4jError, ServiceUnavailable, subprocess.CalledProcessError) as exc:
         print(f"CARAGENT: {exc}", file=sys.stderr)
         return 1
     finally:

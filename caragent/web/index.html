@@ -8,27 +8,36 @@
   <script src="/assets/chat.js" defer></script>
 </head>
 <body>
-  <header><div class="brand">CARAGENT <span>/ TOYOTA</span></div><span id="model-status" class="badge">Bağlanıyor…</span></header>
+  <header>
+    <div class="brand-mark"><span class="logo">C</span><div class="brand">CARAGENT <span>TOYOTA GRAPHRAG</span></div></div>
+    <div class="service-badges"><span id="db-status" class="badge waiting">Neo4j bağlanıyor</span><span id="model-status" class="badge waiting">Ollama bağlanıyor</span></div>
+  </header>
   <main>
     <aside>
       <p class="eyebrow">KILAVUZ ASİSTANI</p>
-      <h1>Toyota’n hakkında konuş.</h1>
-      <p class="muted">Kılavuzlardan bilgi bulur, graph bağlantılarını inceler ve konuşmayı takip eder.</p>
+      <h1>Aracını, kaynağıyla birlikte tanı.</h1>
+      <p class="muted">Soru önce sınıflandırılır; metin, entity ve graph ilişkileri birlikte aranır. Yanıt yalnız bulunan kanıtlardan hazırlanır.</p>
       <label for="vehicle">Model ve yıl</label>
       <select id="vehicle" disabled><option value="">Yükleniyor…</option></select>
       <p id="market" class="muted"></p>
       <button id="new-chat" class="secondary" disabled>＋ Yeni sohbet</button>
-      <div class="archive"><p class="eyebrow">KAYITLI ARŞİV</p><div id="counts" class="counts"></div>
+      <div class="archive"><p class="eyebrow">CANLI VERİ TABANI</p><div id="counts" class="counts"></div>
         <p class="muted">Yanıtlar içe aktarılmış kılavuzlarla sınırlıdır. Kaynakları her cevabın altında açabilirsin.</p></div>
+      <div class="pipeline">
+        <p class="eyebrow">SON RAG ROTASI</p>
+        <div id="route"><p class="muted">İlk sorudan sonra kullanılan kategori, sistem ve graph fact sayısı burada görünür.</p></div>
+      </div>
       <p class="muted local-note">Sohbet bu tarayıcıda saklanır. Araç değiştirdiğinde yeni bir sohbet başlar.</p>
     </aside>
     <section class="chat-panel" aria-label="Toyota sohbeti">
-      <div class="chat-heading"><div><h2>CARAGENT ile sohbet</h2><p id="chat-vehicle" class="muted">Aracını seçerek başlayabilirsin.</p></div><span class="online-dot" aria-hidden="true"></span></div>
+      <div class="chat-heading"><div><p class="eyebrow">KAYNAKLI ARAÇ ASİSTANI</p><h2>CARAGENT ile sohbet</h2><p id="chat-vehicle" class="muted">Aracını seçerek başlayabilirsin.</p></div><span class="online-dot" aria-hidden="true"></span></div>
       <div id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
       <div id="suggestions" class="suggestions">
-        <button type="button" data-question="Motor yağı hakkında kılavuzda hangi bilgiler var?">Motor yağı</button>
-        <button type="button" data-question="Fren sıvısı hakkında kılavuzda ne yazıyor?">Fren sıvısı</button>
-        <button type="button" data-question="Kılavuzda hangi motor kodu geçiyor?">Motor kodu</button>
+        <button type="button" data-question="Motor yağı bakım aralığı hakkında kılavuzda ne yazıyor?">Motor yağı bakımı</button>
+        <button type="button" data-question="Lastik basınç uyarısı yanarsa neyi kontrol etmeliyim?">Lastik uyarısı</button>
+        <button type="button" data-question="Fren sıvısı için hangi bakım bilgileri var?">Fren sıvısı</button>
+        <button type="button" data-question="Direksiyon ağırlaşması hakkında hangi kaynaklar var?">Direksiyon belirtisi</button>
+        <button type="button" data-question="2024 Corolla LE için geri çağırma kaydı geçiyor mu?">Geri çağırmalar</button>
       </div>
       <form id="form">
         <label class="sr-only" for="question">Mesajınız</label>

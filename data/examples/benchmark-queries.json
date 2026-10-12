@@ -1,0 +1,12 @@
+[
+  {
+    "query": "engine oil",
+    "expected_phrase": "engine oil",
+    "manual_key": "synthetic-graph-pipeline-example"
+  },
+  {
+    "query": "tire pressure",
+    "expected_phrase": "tire pressure",
+    "manual_key": "synthetic-graph-pipeline-example"
+  }
+]

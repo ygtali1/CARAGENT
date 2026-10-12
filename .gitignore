@@ -8,6 +8,7 @@ __pycache__/
 data/raw/
 data/processed/
 data/crawl-report.json
+data/chunk-benchmark.json
 data/test-tmp/
 data/qa-check.json
 *.log
