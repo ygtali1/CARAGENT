@@ -88,6 +88,14 @@ Chunk'lardan kaynakla doğrulanmış entity ve relationship JSON'u üretmek içi
 
 Kurallı ve Ollama tabanlı extraction, JSON şeması, normalizasyon ve kalite ölçümü [entity extraction dokümanında](docs/entity-extraction.md) açıklanır. Bu aşama Neo4j'ye domain node'u yazmaz.
 
+Extraction çıktısını kaynak kanıtlarıyla birlikte Neo4j'ye idempotent olarak aktarmak için:
+
+```powershell
+.\.venv\Scripts\python.exe main.py ingest-extraction data/processed/entity-extraction.json
+```
+
+Transaction, kaynak doğrulama, bağlantı havuzu ve filtreli sorgulama ayrıntıları [graph yönetimi dokümanında](docs/graph.md) açıklanır.
+
 Yerel PDF, TXT, MD veya HTML dosyaları için dosyanın yanına manifest koyun:
 
 ```json

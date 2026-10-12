@@ -14,7 +14,7 @@ from neo4j.exceptions import Neo4jError, ServiceUnavailable
 from .config import ROOT, Settings, configure
 from .entity_extractor import (EntityExtractor, ExtractorConfig, evaluate_extraction,
                                extract_chunks)
-from .graph import GraphStore
+from .graph import GraphStore, GraphStoreError
 from .ingest import DEFAULT_LEMON_URL, crawl_lemon, read_manifest
 from .models import chunks_for_manual, resolve_chunking
 from .rag import ask
@@ -64,7 +64,7 @@ def wait_for_database(store, timeout=180):
             store.verify()
             store.initialize()
             return
-        except (ServiceUnavailable, Neo4jError, OSError):
+        except (GraphStoreError, ServiceUnavailable, Neo4jError, OSError):
             if time.monotonic() >= end:
                 raise ValueError("Neo4j hazır olmadı. docker compose logs neo4j ile durumu kontrol edin.")
             time.sleep(3)
@@ -89,6 +89,10 @@ def main(argv=None):
     ingest = subs.add_parser("ingest", help="JSON manifesti graph'a aktar")
     ingest.add_argument("manifest", type=Path)
     add_chunk_options(ingest)
+    ingest_extraction = subs.add_parser(
+        "ingest-extraction", help="Extraction JSON'unu doğrulayıp graph'a aktar")
+    ingest_extraction.add_argument("extraction", type=Path)
+    ingest_extraction.add_argument("--batch-size", type=int, default=500)
     chunk = subs.add_parser("chunk", help="Manifesti Neo4j olmadan chunk JSON'una dönüştür")
     chunk.add_argument("manifest", type=Path)
     chunk.add_argument("--output", type=Path,
@@ -211,6 +215,10 @@ def main(argv=None):
             store.initialize()
             for manual in manuals:
                 output(store.ingest(manual, chunking))
+        elif args.command == "ingest-extraction":
+            payload = json.loads(args.extraction.resolve().read_text(encoding="utf-8"))
+            store.initialize()
+            output(store.ingest_extraction(payload, batch_size=args.batch_size))
         elif args.command == "stats":
             output(store.stats())
         elif args.command == "vehicles":
@@ -220,7 +228,8 @@ def main(argv=None):
                 raise ValueError("Araç id bulunamadı. python main.py vehicles çıktısını kullanın.")
             output(ask(store, settings, args.question, args.vehicle, mode=args.mode))
         return 0
-    except (ValueError, OSError, KeyError, httpx.HTTPError, Neo4jError, ServiceUnavailable, subprocess.CalledProcessError) as exc:
+    except (ValueError, OSError, KeyError, httpx.HTTPError, GraphStoreError,
+            Neo4jError, ServiceUnavailable, subprocess.CalledProcessError) as exc:
         print(f"CARAGENT: {exc}", file=sys.stderr)
         return 1
     finally:

@@ -10,7 +10,7 @@ from neo4j.exceptions import Neo4jError, ServiceUnavailable
 from pydantic import BaseModel, Field, model_validator
 
 from .config import Settings
-from .graph import GraphStore
+from .graph import GraphStore, GraphStoreError
 from .rag import ask
 
 
@@ -54,6 +54,7 @@ def create_app(settings=None, store=None):
 
     @app.exception_handler(Neo4jError)
     @app.exception_handler(ServiceUnavailable)
+    @app.exception_handler(GraphStoreError)
     async def database_error(request, exc):
         logging.getLogger(__name__).error("Neo4j request failed: %s", type(exc).__name__)
         return JSONResponse(status_code=503, content={"detail": "Veritabanına erişilemiyor. Docker ve .env ayarlarını kontrol edin."})
