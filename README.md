@@ -80,6 +80,11 @@ Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Ka
 
 Ölçüm yöntemi ve önerilen değerler [CAR-5 parametre raporunda](docs/ingest-parameter-report.md) açıklanır. Her chunk kılavuz, sayfa, kaynak URL, sıra ve araç metadata'sını taşır. Yapısal davranış ve boyut karşılaştırmaları için [chunklama dokümanına](docs/chunking.md) bakın.
 
+2024 Corolla LE sahiplerinin tekrar eden soru tipleri, 44 bağımsız soru, 12 takip sorusu ve
+P0–P2 önceliklendirmesiyle [CAR-6 kullanıcı sorusu araştırmasında](docs/user-question-research.md)
+yer alır. Makinece okunabilir soru seti `data/examples/corolla-2024-user-questions.json`
+dosyasındadır; graph şeması tanımlamaz ve sonraki modelleme/evaluasyon çalışmalarına girdi sağlar.
+
 Chunk'lardan kaynakla doğrulanmış entity ve relationship JSON'u üretmek için:
 
 ```powershell
