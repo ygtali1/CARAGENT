@@ -4,6 +4,7 @@ import pytest
 from neo4j.exceptions import ServiceUnavailable
 
 from caragent.graph import GraphStore, GraphStoreError
+from caragent.models import Manual, Page, Vehicle, chunks_for_manual
 
 
 def settings(**overrides):
@@ -97,6 +98,47 @@ def test_search_parameterizes_filters_and_preserves_source_metadata():
     assert "manual_source" in cypher and "chunk_id" in cypher and "page_id" in cypher
 
 
+def test_domain_facts_parse_typed_relationship_evidence():
+    store = object.__new__(GraphStore)
+    calls = []
+    store._query = lambda cypher, **params: (calls.append((cypher, params)) or [{
+        "id": "relation-1", "type": "HAS_INTERVAL", "source_id": "fluid-1",
+        "source_type": "fluid", "source_name": "engine oil", "target_id": "value-1",
+        "target_type": "technical_value", "target_name": "10,000 miles",
+        "confidence": 1.0, "status": "verified", "properties_json": "{}",
+        "evidence_json": '[{"chunk_id":"chunk-1"}]',
+    }])
+
+    facts = store.domain_facts("motor yağı bakım aralığı", "vehicle-1")
+
+    assert facts[0]["evidence"] == [{"chunk_id": "chunk-1"}]
+    assert facts[0]["properties"] == {}
+    assert "HAS_INTERVAL" in calls[0][1]["relationship_types"]
+    assert "engine" in calls[0][1]["terms"] and "oil" in calls[0][1]["terms"]
+
+
+def test_retrieve_combines_text_and_graph_evidence_without_duplicate_chunks():
+    store = object.__new__(GraphStore)
+    store.search = lambda *_args: [
+        {"chunk_id": "text-1", "reason": "text_match"},
+        {"chunk_id": "shared", "reason": "text_match"},
+        {"chunk_id": "text-2", "reason": "text_match"},
+    ]
+    store.domain_facts = lambda *_args, **_kwargs: [
+        {"type": "APPLIES_TO",
+         "evidence": [{"chunk_id": "shared"}, {"chunk_id": "fact-1"}]},
+    ]
+    store._sources_for_chunk_ids = lambda *_args: [
+        {"chunk_id": "shared", "reason": "graph_fact"},
+        {"chunk_id": "fact-1", "reason": "graph_fact"},
+    ]
+
+    result = store.retrieve("engine oil", "vehicle-1", limit=3)
+
+    assert [row["chunk_id"] for row in result["sources"]] == ["text-1", "shared", "fact-1"]
+    assert result["plan"]["graph_facts"] == 1
+
+
 @pytest.mark.parametrize("field,value,message", [
     ("type", "invented", "entity türü"),
     ("status", "draft", "status"),
@@ -120,6 +162,41 @@ def test_extraction_rejects_missing_and_cross_vehicle_endpoints():
         GraphStore._validated_extraction(payload)
 
 
+def test_extraction_rejects_invalid_relationship_direction():
+    payload = extraction_payload()
+    payload["relationships"][0]["source_entity_id"] = "entity-oil"
+    payload["relationships"][0]["target_entity_id"] = "entity-check"
+    with pytest.raises(ValueError, match="yönü"):
+        GraphStore._validated_extraction(payload)
+
+
+def test_rebuild_preflight_matches_extraction_evidence_to_manifest_chunks():
+    manual = Manual(
+        key="manual-1", title="Test", source="https://example.test/manual",
+        vehicle=Vehicle(model="Corolla LE", year=2024, market="US"), language="en",
+        pages=(Page(1, "Check engine oil.", "Oil", "https://example.test/page/1"),),
+    )
+    chunk = chunks_for_manual(manual)[0]
+    payload = extraction_payload()
+    for entity in payload["entities"]:
+        entity["vehicle_id"] = manual.vehicle.id
+        entity["vehicle_model"] = manual.vehicle.model
+        for evidence in entity["evidence"]:
+            evidence.update(chunk_id=chunk.id, page_id=chunk.page_id,
+                            page_number=chunk.page_number, source=chunk.source)
+    for relationship in payload["relationships"]:
+        for evidence in relationship["evidence"]:
+            evidence.update(chunk_id=chunk.id, page_id=chunk.page_id,
+                            page_number=chunk.page_number, source=chunk.source)
+
+    result = GraphStore.validate_extraction_sources(payload, (manual,))
+    assert result == {"chunks": 1, "entities": 2, "relationships": 1}
+
+    payload["entities"][0]["evidence"][0]["chunk_id"] = "stale-chunk"
+    with pytest.raises(ValueError, match="yeni chunk"):
+        GraphStore.validate_extraction_sources(payload, (manual,))
+
+
 def test_extraction_write_validates_provenance_and_uses_merge():
     statements = []
 
@@ -141,10 +218,11 @@ def test_extraction_write_validates_provenance_and_uses_merge():
     assert result == {"status": "upserted", "entities": 2, "relationships": 1}
     joined = "\n".join(statement for statement, _ in statements)
     assert "HAS_MANUAL" in joined and "MERGE (e:CaragentEntity" in joined
-    assert "MERGE (source)-[r:CaragentExtractedRelation" in joined
+    assert "MERGE (source)-[r:APPLIES_TO" in joined
+    assert "SET e:CaragentComponentEntity" in joined
     relation_rows = next(params["rows"] for statement, params in statements
-                         if "CaragentExtractedRelation {id:row.id}" in statement
-                         and "SET r.kind" in statement)
+                         if "[r:APPLIES_TO {id:row.id}]" in statement
+                         and "r.confidence" in statement)
     assert '"chunk_id": "chunk-1"' in relation_rows[0]["evidence_json"]
 
 

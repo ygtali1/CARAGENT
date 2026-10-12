@@ -1,5 +1,8 @@
 # CARAGENT — Toyota GraphRAG
 
+> Projenin amacı, mimarisi, veri hattı, Neo4j modeli ve çalıştırma adımlarını tek yerde görmek
+> için [CARAGENT proje rehberine](docs/project-guide.md) bakın.
+
 Toyota kılavuzlarını okuyup Neo4j graph veritabanını otomatik oluşturur. Model ve yıl seçilerek sorulan sorular için ilgili kılavuz metnini, kaynak bağlantısını ve sayfayı gösterir. Yerel Ollama modeli açıldığında Türkçe yanıt üretir.
 
 Başlangıç verisi **Lemon Manuals / Toyota Corolla LE / 2024 / Repair and Diagnosis** sayfalarıdır. İçe aktarma bütün Toyota modellerine açık, bu ilk veri seti sınırlıdır. Rust kullanılmaz: proje Python 3.12 + Neo4j + RAG/GraphRAG üzerine kuruludur.
@@ -18,6 +21,12 @@ Başlangıç verisi **Lemon Manuals / Toyota Corolla LE / 2024 / Repair and Diag
 ```
 
 Sohbet ekranı: **http://127.0.0.1:8000**. Mesajlar alt alta korunur; takip soruları önceki konuşma ile birlikte işlenir. Kaynak bağlantıları ve kayıtlı metinler her cevabın altında açılır. Sohbet bu tarayıcıda saklanır; "Yeni sohbet" veya araç değişikliği konuşmayı sıfırlar. PyCharm'da `main.py` dosyasını parametresiz çalıştırmak da ekran sunucusunu başlatır. Çalışma dizini `C:\dev\CARAGENT`, interpreter `.venv\Scripts\python.exe` olmalı.
+
+Arayüz Neo4j ve Ollama durumunu ayrı rozetlerle gösterir. Her yanıtta sorgunun niyeti,
+CAR-6 kategorisi, ilgili araç sistemi, P0–P2 önceliği, seçilen kaynak ve graph fact sayısı
+görülebilir. Retrieval sırası full-text/semantic kategori araması, typed entity eşleşmesi,
+ilişki kanıtı ve kaynak deduplikasyonudur. Ollama yalnız bu güncel kanıt paketinden Türkçe yanıt
+üretir; geçersiz veya kaynaksız citation kabul edilmez.
 
 Alternatif kurulum: `powershell -ExecutionPolicy Bypass -File scripts/setup.ps1 -Pages 12`. Bu betik mevcut venv'i kullanır; venv oluşturmaz.
 
@@ -49,7 +58,16 @@ RETURN p LIMIT 50;
 Parça adı bağlantıları:
 
 ```cypher
-MATCH p=(c:CaragentChunk)-[:MENTIONS]->(t:CaragentComponent)
+MATCH p=(c:CaragentChunk)-[:MENTIONS]->(t:CaragentTopic)
+RETURN p LIMIT 50;
+```
+
+Kaynak kanıtına bağlı domain grafı:
+
+```cypher
+MATCH p=(c:CaragentChunk)-[:SUPPORTS]->(e:CaragentEntity)
+          -[:APPLIES_TO|HAS_VALUE|HAS_INTERVAL|WARNS_ABOUT|PART_OF|
+             REQUIRES|INDICATES|RESOLVED_BY|AFFECTS]->(:CaragentEntity)
 RETURN p LIMIT 50;
 ```
 
@@ -83,7 +101,8 @@ Chunklama varsayılan olarak 1000 karakter ve 150 karakter overlap kullanır. Ka
 2024 Corolla LE sahiplerinin tekrar eden soru tipleri, 44 bağımsız soru, 12 takip sorusu ve
 P0–P2 önceliklendirmesiyle [CAR-6 kullanıcı sorusu araştırmasında](docs/user-question-research.md)
 yer alır. Makinece okunabilir soru seti `data/examples/corolla-2024-user-questions.json`
-dosyasındadır; graph şeması tanımlamaz ve sonraki modelleme/evaluasyon çalışmalarına girdi sağlar.
+dosyasındadır. Bu sınıflandırma chunk metadata'sını ve domain graph modelini yönlendirir;
+araştırma sonuçları tek başına teknik doğruluk veya arıza teşhisi sayılmaz.
 
 Chunk'lardan kaynakla doğrulanmış entity ve relationship JSON'u üretmek için:
 
@@ -98,6 +117,18 @@ Extraction çıktısını kaynak kanıtlarıyla birlikte Neo4j'ye idempotent ola
 ```powershell
 .\.venv\Scripts\python.exe main.py ingest-extraction data/processed/entity-extraction.json
 ```
+
+Mevcut CARAGENT verisini temizleyip manifest, chunk ve extraction çıktısından yeni şemayı
+tek akışta yeniden kurmak için:
+
+```powershell
+.\.venv\Scripts\python.exe main.py rebuild-graph `
+  data/processed/toyota-corolla-le-2024.json `
+  data/processed/entity-extraction.json
+```
+
+Komut silmeden önce extraction şemasını ve bütün kanıt chunk'larını manifest üzerinde doğrular.
+Yalnız `Caragent*` etiketli node'lar silinir; Neo4j'deki başka veriler hedeflenmez.
 
 Transaction, kaynak doğrulama, bağlantı havuzu ve filtreli sorgulama ayrıntıları [graph yönetimi dokümanında](docs/graph.md) açıklanır.
 
@@ -132,13 +163,21 @@ API dokümanı: http://127.0.0.1:8000/docs
 
 | Endpoint | İşlev |
 |---|---|
-| `GET /api/health` | Neo4j bağlantısı ve yanıt modu |
+| `GET /api/health` | Neo4j, Ollama ve seçili modelin hazır olma durumu |
 | `GET /api/vehicles` | İçe aktarılmış araçlar |
 | `GET /api/stats` | Graph kayıt sayıları |
 | `GET /api/graph/{vehicle_id}` | Araç, belge ve parça bağlantıları |
 | `POST /api/ask` | `question`, `vehicle_id`, isteğe bağlı `limit` ve `history` ile sohbet cevabı |
 
-`history`, geçmiş user/assistant mesaj çiftlerini içerir; en fazla 12 mesaj gönderilir. Sistem talimatları istemciden kabul edilmez. Sunucu yakın konuşma turlarını sınırlı bir bağlam bütçesiyle modele aktarır. "Peki bunu…" gibi takip sorularında önceki kullanıcı konusu aramaya eklenir; açıkça belirtilen yeni bir parça konusu ayrı aranır. Genel amaçlı dil modeli sorgu yeniden yazımı henüz kullanılmaz.
+`history`, geçmiş user/assistant mesaj çiftlerini içerir; en fazla 12 mesaj gönderilir. Sistem
+talimatları istemciden kabul edilmez. Sunucu yakın konuşma turlarını sınırlı bir bağlam bütçesiyle
+modele aktarır. "Peki bunu…" gibi takip sorularında önceki kullanıcı konusu aramaya eklenir;
+açıkça belirtilen yeni bir parça konusu ayrı aranır. API yanıtındaki `orchestration`, niyet,
+kategori, sistem, öncelik, graph fact ve seçilen kaynak sayılarını içerir.
+Direksiyon kontrolü kaybı gibi veri setinde açık geri çağırma kanıtı bulunan P0 güvenlik
+soruları, küçük yerel modelin serbest üretimine bırakılmaz: kaynak metninden oluşturulan
+`evidence_guard` yanıtı geri çağırma numarasını, farklı varyant uyarısını, VIN doğrulamasını
+ve kesin teşhis olmayan olası nedenleri kaynak numaralarıyla verir.
 
 ## Testler
 

@@ -142,7 +142,7 @@ class ChunkingConfig:
 
     @property
     def signature(self) -> str:
-        return f"structure-v3-{self.strategy}-{self.size}-{self.overlap}"
+        return f"question-aware-v5-{self.strategy}-{self.size}-{self.overlap}"
 
 
 CHUNK_DEFAULTS = {
@@ -174,6 +174,117 @@ class Chunk:
     vehicle_id: str
     vehicle_model: str
     vehicle_year: int
+    question_categories: tuple[str, ...] = ()
+    systems: tuple[str, ...] = ()
+    priority: str = "P2"
+
+
+QUESTION_TAXONOMY = {
+    "maintenance": {
+        "title": "Bakım ve sıvılar", "priority": "P0",
+        "aliases": ("maintenance", "service", "oil", "fluid", "filter", "coolant",
+                    "inspect", "replacement", "replace", "bakım", "yağ", "sıvı"),
+    },
+    "warnings": {
+        "title": "Uyarılar ve arıza belirtileri", "priority": "P0",
+        "aliases": ("warning", "caution", "notice", "malfunction", "dtc", "diagnosis",
+                    "trouble", "indicator", "symptom", "warning light", "abnormal noise",
+                    "vibration", "hard steering", "blank screen", "connection failure",
+                    "uyarı", "arıza", "belirti", "titreşim", "ses", "ağırlaşma",
+                    "çalışmıyor", "yanmıyor"),
+    },
+    "safety_recalls": {
+        "title": "Güvenlik ve geri çağırmalar", "priority": "P0",
+        "aliases": ("recall", "campaign", "nhtsa", "safety", "airbag", "restraint",
+                    "geri çağır", "güvenlik"),
+    },
+    "tires_brakes": {
+        "title": "Lastikler ve frenler", "priority": "P0",
+        "aliases": ("tire", "tyre", "wheel", "tpms", "brake", "lastik", "fren"),
+    },
+    "driver_assistance": {
+        "title": "Sürüş desteği", "priority": "P1",
+        "aliases": ("pre-collision", "pcs", "lane", "lta", "radar", "camera",
+                    "cruise control", "road sign", "driver assist", "şerit", "kamera"),
+    },
+    "multimedia": {
+        "title": "Multimedya ve telefon", "priority": "P1",
+        "aliases": ("carplay", "android auto", "multimedia", "bluetooth", "audio",
+                    "phone", "display", "screen", "telefon", "ekran"),
+    },
+    "keys_remote": {
+        "title": "Anahtar ve uzaktan erişim", "priority": "P1",
+        "aliases": ("smart key", "keyless", "key fob", "remote connect", "remote start",
+                    "immobilizer", "door lock", "anahtar", "uzaktan"),
+    },
+    "efficiency_drivetrain": {
+        "title": "Yakıt ekonomisi ve aktarma", "priority": "P1",
+        "aliases": ("fuel economy", "fuel consumption", "mpg", "cvt", "transmission",
+                    "drivetrain", "engine control", "yakıt", "şanzıman"),
+    },
+    "ownership": {
+        "title": "Donanım ve genel kullanım", "priority": "P2",
+        "aliases": ("accessory", "warranty", "jack", "wiper", "seat", "owner",
+                    "equipment", "garanti", "kriko", "silecek"),
+    },
+}
+
+QUESTION_SYSTEMS = {
+    "engine": ("engine", "motor"),
+    "lubrication": ("engine oil", "oil pressure", "lubrication", "motor yağı"),
+    "transmission": ("transmission", "cvt", "şanzıman"),
+    "brakes": ("brake", "abs", "fren"),
+    "tires_tpms": ("tire", "tyre", "wheel", "tpms", "lastik"),
+    "steering": ("steering", "direksiyon"),
+    "srs": ("airbag", "srs", "restraint", "hava yastığı"),
+    "driver_assistance": ("pre-collision", "pcs", "lane", "lta", "radar", "camera",
+                          "cruise control", "road sign"),
+    "multimedia": ("carplay", "android auto", "multimedia", "bluetooth", "audio", "screen"),
+    "keys_remote": ("smart key", "keyless", "key fob", "remote connect", "remote start",
+                    "immobilizer"),
+    "charging": ("battery", "charging system", "alternator", "akü"),
+    "cooling": ("coolant", "cooling system", "antifreeze"),
+}
+
+
+QUESTION_INTENT_HINTS = (
+    ("recall", ("recall", "geri çağır", "geri cagir", "kampanya", "nhtsa")),
+    ("maintenance_interval", ("ne zaman", "kaç km", "kac km", "kaç mil", "interval",
+                              "schedule", "bakım aralığı", "değiştirilmeli")),
+    ("troubleshooting", ("neden", "arıza", "uyarı", "uyari", "warning", "ışık", "isik",
+                         "ses", "titreşim", "titresim", "çalışm", "calism", "ağırlaş",
+                         "agirlas", "kayb", "sorun", "problem", "tehlike")),
+    ("procedure", ("nasıl", "nasil", "ne yapmal", "adım", "prosedür", "procedure",
+                   "reset", "değiştir", "degistir")),
+    ("specification", ("kaç", "kac", "değer", "deger", "tork", "basınç", "basinc",
+                       "kapasite", "psi", "nm")),
+)
+
+
+def question_context(text: str) -> tuple[list[str], list[str], str]:
+    """Classify a chunk with the CAR-6 question taxonomy without asserting a diagnosis."""
+    folded = normalize(text).casefold()
+    contains = lambda alias: re.search(
+        r"(?<!\w)" + re.escape(alias.casefold())
+        + r"(?:y?[ıiuü]|n[ıiuü]|s[ıiuü]|[dt][ae]n|[dt][ae])?(?!\w)", folded) is not None
+    categories = [category for category, spec in QUESTION_TAXONOMY.items()
+                  if any(contains(alias) for alias in spec["aliases"])]
+    systems = [system for system, aliases in QUESTION_SYSTEMS.items()
+               if any(contains(alias) for alias in aliases)]
+    priorities = {"P0": 0, "P1": 1, "P2": 2}
+    priority = min((QUESTION_TAXONOMY[item]["priority"] for item in categories),
+                   key=priorities.get, default="P2")
+    return categories, systems, priority
+
+
+def question_intent(text: str, categories=None) -> str:
+    """Select the retrieval route, promoting symptom language to troubleshooting."""
+    folded = normalize(text).casefold()
+    for intent, hints in QUESTION_INTENT_HINTS:
+        if any(hint in folded for hint in hints):
+            return intent
+    selected = categories if categories is not None else question_context(text)[0]
+    return "troubleshooting" if "warnings" in selected else "general_information"
 
 
 def _looks_like_heading(block: str) -> bool:
@@ -264,6 +375,8 @@ def chunks_for_manual(manual: Manual, config: ChunkingConfig | None = None) -> t
         page_id = stable_id(manual.id, page.number)
         for page_ordinal, text in enumerate(split_text(
                 page.text, config.size, config.overlap, config.strategy)):
+            categories, systems, priority = question_context(
+                f"{page.title or manual.title}\n{text}")
             chunks.append(Chunk(
                 id=stable_id(page_id, page_ordinal, config.signature),
                 text=text,
@@ -277,6 +390,9 @@ def chunks_for_manual(manual: Manual, config: ChunkingConfig | None = None) -> t
                 vehicle_id=manual.vehicle.id,
                 vehicle_model=manual.vehicle.model,
                 vehicle_year=manual.vehicle.year,
+                question_categories=tuple(categories),
+                systems=tuple(systems),
+                priority=priority,
             ))
             ordinal += 1
     return tuple(chunks)
@@ -292,6 +408,12 @@ COMPONENTS = {
     "coolant": ("coolant", "antifreeze", "soğutma", "sogutma"),
     "transmission": ("transmission", "şanzıman", "sanziman"),
     "airbag": ("airbag", "hava yastığı", "srs"),
+    "steering": ("steering", "direksiyon"),
+    "tpms": ("tire pressure monitoring system", "tpms", "lastik basınç"),
+    "multimedia": ("multimedia", "carplay", "android auto", "bluetooth", "ekran"),
+    "smart_key": ("smart key", "key fob", "anahtar"),
+    "driver_assistance": ("driver assistance", "pre-collision", "lane tracing", "radar",
+                          "camera", "sürüş desteği", "şerit", "kamera"),
 }
 
 

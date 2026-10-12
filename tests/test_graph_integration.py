@@ -58,7 +58,7 @@ def test_real_graph_ingestion_retrieval_isolation_replacement_and_rollback():
         assert store.ingest_extraction(extraction)["status"] == "upserted"
         assert store.ingest_extraction(extraction)["status"] == "upserted"
         counts = store._query("""MATCH (e:CaragentEntity) WHERE e.id IN $ids
-            OPTIONAL MATCH (e)-[r:CaragentExtractedRelation]->()
+            OPTIONAL MATCH (e)-[r]->(:CaragentEntity)
             RETURN count(DISTINCT e) AS entities, count(DISTINCT r) AS relationships""",
                               ids=extraction_entity_ids)
         assert counts == [{"entities": 2, "relationships": 1}]

@@ -104,6 +104,22 @@ def test_chunks_keep_manual_page_vehicle_source_and_order_metadata():
     assert manual.content_hash_for(config) != manual.content_hash_for(replace(config, size=140))
 
 
+def test_chunks_are_enriched_with_car6_question_context():
+    manual = fixture_manual((Page(
+        1,
+        "CAUTION: Check tire pressure before using dynamic radar cruise control.",
+        "TPMS and driver assistance",
+        "https://example.test/tpms",
+    ),))
+    item = chunks_for_manual(manual)[0]
+
+    assert {"warnings", "tires_brakes", "driver_assistance"} <= set(
+        item.question_categories)
+    assert {"tires_tpms", "driver_assistance"} <= set(item.systems)
+    assert item.priority == "P0"
+    assert "question-aware-v5" in ChunkingConfig().signature
+
+
 def test_invalid_chunk_settings_are_rejected():
     with pytest.raises(ValueError, match="en az 100"):
         ChunkingConfig(size=99, overlap=10)

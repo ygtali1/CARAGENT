@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from .config import Settings
 from .graph import GraphStore, GraphStoreError
-from .rag import ask
+from .rag import ask, ollama_status
 
 
 class ChatMessage(BaseModel):
@@ -60,20 +60,29 @@ def create_app(settings=None, store=None):
         return JSONResponse(status_code=503, content={"detail": "Veritabanına erişilemiyor. Docker ve .env ayarlarını kontrol edin."})
 
     @app.get("/", include_in_schema=False)
-    def home():
+    async def home():
         return FileResponse(Path(__file__).parent / "web" / "index.html")
 
     @app.get("/api/health")
-    def health():
+    async def health():
         store.verify()
-        return {"status": "ok", "answer_mode": settings.answer_mode}
+        model = ollama_status(settings)
+        ready = settings.answer_mode == "sources" or model["ready"]
+        return {"status": "ready" if ready else "degraded",
+                "database": {"connected": True,
+                             "database": getattr(settings, "database", "neo4j")},
+                "model": model, "answer_mode": settings.answer_mode}
 
     @app.get("/api/stats")
-    def stats():
-        return {"counts": store.stats(), "answer_mode": settings.answer_mode}
+    async def stats():
+        overview = store.rag_overview() if hasattr(store, "rag_overview") else {
+            "nodes": store.stats() if hasattr(store, "stats") else [],
+            "relationships": [], "categories": []}
+        return {**overview, "counts": overview["nodes"],
+                "answer_mode": settings.answer_mode}
 
     @app.get("/api/vehicles")
-    def vehicles():
+    async def vehicles():
         return {"vehicles": store.vehicles()}
 
     def validate_vehicle(vehicle_id):
@@ -81,12 +90,12 @@ def create_app(settings=None, store=None):
             raise HTTPException(404, "Seçilen araç için içe aktarılmış kılavuz yok.")
 
     @app.get("/api/graph/{vehicle_id}")
-    def graph(vehicle_id: str):
+    async def graph(vehicle_id: str):
         validate_vehicle(vehicle_id)
         return {"documents": store.graph_preview(vehicle_id)}
 
     @app.post("/api/ask")
-    def answer(body: AskRequest):
+    async def answer(body: AskRequest):
         validate_vehicle(body.vehicle_id)
         return ask(store, settings, body.question, body.vehicle_id, body.limit,
                    history=[message.model_dump() for message in body.history])

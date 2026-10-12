@@ -93,6 +93,12 @@ def main(argv=None):
         "ingest-extraction", help="Extraction JSON'unu doğrulayıp graph'a aktar")
     ingest_extraction.add_argument("extraction", type=Path)
     ingest_extraction.add_argument("--batch-size", type=int, default=500)
+    rebuild = subs.add_parser(
+        "rebuild-graph", help="CARAGENT graph'ını manifest ve extraction çıktısından yeniden kur")
+    rebuild.add_argument("manifest", type=Path)
+    rebuild.add_argument("extraction", type=Path)
+    rebuild.add_argument("--batch-size", type=int, default=500)
+    add_chunk_options(rebuild)
     chunk = subs.add_parser("chunk", help="Manifesti Neo4j olmadan chunk JSON'una dönüştür")
     chunk.add_argument("manifest", type=Path)
     chunk.add_argument("--output", type=Path,
@@ -219,6 +225,22 @@ def main(argv=None):
             payload = json.loads(args.extraction.resolve().read_text(encoding="utf-8"))
             store.initialize()
             output(store.ingest_extraction(payload, batch_size=args.batch_size))
+        elif args.command == "rebuild-graph":
+            manuals = read_manifest(args.manifest.resolve())
+            payload = json.loads(args.extraction.resolve().read_text(encoding="utf-8"))
+            chunking = resolve_chunking(args.chunk_strategy, args.chunk_size, args.chunk_overlap)
+            # Validate schema and every evidence pointer before deleting the current graph.
+            store.validate_extraction_sources(payload, manuals, chunking)
+            reset_report = store.reset()
+            totals = {"manuals": 0, "pages": 0, "chunks": 0}
+            for manual in manuals:
+                report = store.ingest(manual, chunking)
+                totals["manuals"] += 1
+                totals["pages"] += report["pages"]
+                totals["chunks"] += report["chunks"]
+            extraction_report = store.ingest_extraction(payload, batch_size=args.batch_size)
+            output({**reset_report, **totals, "extraction": extraction_report,
+                    "stats": store.stats()})
         elif args.command == "stats":
             output(store.stats())
         elif args.command == "vehicles":

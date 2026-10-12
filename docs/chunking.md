@@ -44,8 +44,25 @@ Her `Chunk` aşağıdaki alanları taşır:
 - Sayfa numarası ve sayfa içi sıra
 - Başlık ve kaynak URL
 - Araç kimliği, modeli ve model yılı
+- CAR-6 soru kategorileri (`question_categories`)
+- İlgili araç alt sistemleri (`systems`)
+- Soru önceliği (`P0`, `P1` veya `P2`)
 
-Aynı girdi ve ayarlar aynı chunk metinlerini, sırasını ve kimliklerini üretir. Ayar değiştiğinde chunk kimlikleri ve kılavuzun ingest içerik özeti de değişir.
+Aynı girdi ve ayarlar aynı chunk metinlerini, sırasını, sınıflandırmasını ve kimliklerini üretir.
+Chunk imzası `question-aware-v5` sürümünü içerir; böylece eski sınıflandırma ve kategorisiz chunk'lar yeni
+extraction kanıtlarıyla yanlışlıkla eşleşmez. Ayar veya sınıflandırma sürümü değiştiğinde chunk
+kimlikleri ve kılavuzun ingest içerik özeti de değişir.
+
+## Soru odaklı zenginleştirme
+
+CAR-6 araştırmasından gelen dokuz soru kümesi şunlardır: bakım/sıvılar, uyarılar/arıza
+belirtileri, güvenlik/geri çağırmalar, lastik/fren, sürüş desteği, multimedya/telefon,
+anahtar/uzaktan erişim, yakıt/aktarma ve genel sahiplik. Sınıflandırıcı başlık ve chunk
+metnindeki açık anahtar sözcükleri kullanır. Bir chunk birden çok kategori ve sistem taşıyabilir.
+
+Bu metadata retrieval önceliklendirmesi içindir; bir neden-sonuç, arıza teşhisi veya araç
+uyumluluğu iddiası üretmez. Teknik iddialar yine kaynak alıntılı entity/relationship extraction
+tarafından doğrulanır.
 
 ## Boyut karşılaştırması
 

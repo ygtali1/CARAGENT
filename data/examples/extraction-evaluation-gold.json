@@ -4,7 +4,7 @@
     {"type": "component", "normalized_name": "battery"},
     {"type": "component", "normalized_name": "brake"},
     {"type": "component", "normalized_name": "engine"},
-    {"type": "component", "normalized_name": "engine oil"},
+    {"type": "fluid", "normalized_name": "engine oil"},
     {"type": "maintenance_action", "normalized_name": "inspect"},
     {"type": "maintenance_action", "normalized_name": "replace"},
     {"type": "system", "normalized_name": "brake system"},
@@ -15,12 +15,12 @@
     {
       "type": "applies_to",
       "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
-      "target_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4"
+      "target_entity_id": "9a48057a1e93dab6580a99af72c3a28d59281f49197a72a9d1a361c5cfd14516"
     },
     {
       "type": "applies_to",
       "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
-      "target_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664"
+      "target_entity_id": "fa2ab4446d1d9dda92341383260a22723116d73afe06f4327c4ee9c14170a6c4"
     },
     {
       "type": "applies_to",
@@ -28,8 +28,23 @@
       "target_entity_id": "d3e474a17d9448f008a93651386a8ef9fec551908aaeb59e81059ecdb7b08662"
     },
     {
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "26ce5ae0b2450a81309b20db20785eb1bc3024fcbbfccb122ce25caafe07bec7"
+    },
+    {
+      "type": "applies_to",
+      "source_entity_id": "b5b115df3d52150b656aaedfb99b2f6e7989629102a33c39d67dd7d2a909f159",
+      "target_entity_id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac"
+    },
+    {
       "type": "has_value",
-      "source_entity_id": "8f4a5edb5dcc32b8c63b9a630116174cf3a70c902bca40762d87d9e1c317e664",
+      "source_entity_id": "9b5dcc59bf1153e4ffe88fac7feb9308b77bfcd80399c8fc148fafdb9ecf0cac",
+      "target_entity_id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94"
+    },
+    {
+      "type": "has_value",
+      "source_entity_id": "9a48057a1e93dab6580a99af72c3a28d59281f49197a72a9d1a361c5cfd14516",
       "target_entity_id": "8154029e9bdeeb8dac5ba17251ebbd7e0acc627ae61c5023e6e545308843fe94"
     },
     {

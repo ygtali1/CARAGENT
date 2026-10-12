@@ -7,7 +7,8 @@ import httpx
 
 from caragent.api import create_app
 from caragent.graph import search_query
-from caragent.rag import ask, retrieval_question, bounded_history
+from caragent.rag import (ask, bounded_history, ollama_status, question_plan,
+                          retrieval_question)
 
 
 VEHICLE_ID = "a" * 64
@@ -119,6 +120,70 @@ def test_follow_up_uses_previous_topic_but_new_topic_does_not():
                              {"role": "assistant", "content": "Klima yanıtı"}]
     assert "Klima" in retrieval_question("Peki bunu anlatır mısın?", new_history)
     assert "Motor yağı" not in retrieval_question("Peki bunu anlatır mısın?", new_history)
+
+
+def test_question_plan_routes_car6_categories_systems_and_intent():
+    plan = question_plan("Lastik basınç uyarısı yanarsa neden olur?")
+    assert plan["intent"] == "troubleshooting"
+    assert {"warnings", "tires_brakes"} <= set(plan["categories"])
+    assert "tires_tpms" in plan["systems"]
+    assert plan["priority"] == "P0"
+
+
+def test_question_plan_promotes_safety_symptoms_to_troubleshooting():
+    plan = question_plan("Direksiyon ağırlaşması veya direksiyon kaybı olursa ne yapmalıyım?")
+    assert plan["intent"] == "troubleshooting"
+    assert "warnings" in plan["categories"]
+    assert "steering" in plan["systems"]
+    assert plan["priority"] == "P0"
+
+
+def test_ollama_status_checks_configured_model_without_guessing():
+    class Response:
+        def raise_for_status(self):
+            pass
+        def json(self):
+            return {"models": [{"name": "fixture:latest"}]}
+    client = SimpleNamespace(get=lambda _url: Response())
+    result = ollama_status(settings("ollama"), client)
+    assert result == {"connected": True, "ready": True, "model": "fixture",
+                      "detail": "Model hazır."}
+
+
+def test_ask_exposes_graph_orchestration_metadata_in_sources_mode():
+    class OrchestratedStore(FakeStore):
+        def retrieve(self, question, vehicle, limit):
+            source = self.search(question, vehicle, limit)[0]
+            return {"sources": [source], "facts": [], "plan": {
+                "categories": ["maintenance"], "systems": ["lubrication"],
+                "priority": "P0", "text_candidates": 1,
+                "graph_facts": 0, "selected_sources": 1}}
+    result = ask(OrchestratedStore(), settings("sources"),
+                 "Motor yağı bakım aralığı nedir?", VEHICLE_ID)
+    assert result["mode"] == "sources"
+    assert result["orchestration"]["priority"] == "P0"
+    assert result["orchestration"]["selected_sources"] == 1
+
+
+def test_safety_critical_steering_answer_is_extractive_and_variant_guarded():
+    class SafetyStore(FakeStore):
+        def retrieve(self, question, vehicle, limit):
+            common = {"page": 1, "url": "https://example.test", "model": "Corolla LE",
+                      "year": 2024, "market": "Test", "reason": "text_match", "score": 1.0}
+            return {"sources": [
+                {**common, "id": "recall", "chunk_id": "recall", "title": "Steering",
+                 "text": "24V878000 loss of steering control different variant/trim than selected"},
+                {**common, "id": "causes", "chunk_id": "causes", "title": "Troubleshooting",
+                 "text": "Air in pump fluid system; insufficient pump pressure output"},
+            ], "facts": [], "plan": {"categories": ["warnings"], "systems": ["steering"],
+                "priority": "P0", "text_candidates": 2, "graph_facts": 0,
+                "selected_sources": 2}}
+
+    result = ask(SafetyStore(), settings("ollama"),
+                 "Direksiyon ağırlaştı, ne yapmalıyım?", VEHICLE_ID)
+    assert result["mode"] == "evidence_guard"
+    assert "VIN" in result["answer"] and "kesin teşhis değildir" in result["answer"]
+    assert "[1]" in result["answer"] and "[2]" in result["answer"]
 
 
 def test_real_chat_payload_contains_history_and_current_sources(monkeypatch):

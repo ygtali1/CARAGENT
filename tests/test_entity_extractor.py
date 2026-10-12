@@ -55,7 +55,7 @@ def test_empty_or_unrecognized_chunk_returns_an_empty_controlled_result():
     result = extract_rules(chunk(""))
     assert result.entities == ()
     assert result.relationships == ()
-    assert result.schema_version == "caragent-extraction-v1"
+    assert result.schema_version == "caragent-extraction-v2"
 
 
 def test_entities_are_deduplicated_across_chunks_but_keep_all_evidence():
@@ -64,10 +64,30 @@ def test_entities_are_deduplicated_across_chunks_but_keep_all_evidence():
         chunk("Motor yağı seviyesini kontrol edin.", "chunk-2", 2),
     ])
     oil = [entity for entity in report["entities"]
-           if entity["type"] == "component" and entity["normalized_name"] == "engine oil"]
+           if entity["type"] == "fluid" and entity["normalized_name"] == "engine oil"]
     assert len(oil) == 1
     assert {evidence["chunk_id"] for evidence in oil[0]["evidence"]} == {"chunk-1", "chunk-2"}
     assert report["summary"]["chunks"] == 2
+
+
+def test_question_driven_entities_and_relationships_are_extracted():
+    source = chunk(
+        "CAUTION: Replace the CVT fluid every 30,000 miles. "
+        "A hard steering symptom may be due to the steering system. "
+        "Safety Recall 24TA13 affects the steering system. Apple CarPlay can be reset."
+    )
+    source = Chunk(**{**source.__dict__,
+                      "question_categories": ("maintenance", "safety_recalls", "multimedia"),
+                      "systems": ("transmission", "steering", "multimedia"),
+                      "priority": "P0"})
+    result = extract_rules(source)
+    entity_types = {entity.type for entity in result.entities}
+    relation_types = {relationship.type for relationship in result.relationships}
+
+    assert {"fluid", "technical_value", "symptom", "recall", "feature"} <= entity_types
+    assert {"has_interval", "indicates", "affects"} <= relation_types
+    assert all(entity.priority == "P0" for entity in result.entities)
+    assert all("maintenance" in entity.question_categories for entity in result.entities)
 
 
 def test_llm_schema_validation_rejects_unknown_and_ungrounded_candidates():

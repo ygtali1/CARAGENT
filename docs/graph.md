@@ -6,9 +6,25 @@ CARAGENT graph katmanı iki veri akışını birbirinden ayırır:
 2. `ingest-extraction` CAR-8 çıktısındaki doğrulanmış entity ve relationship kayıtlarını bu
    kaynak zincirine bağlar.
 
-Extraction kayıtları gelecekteki domain graph tasarımını kilitlememek için genel
-`CaragentEntity` node'ları ve `CaragentExtractedRelation` relationship'leri olarak saklanır.
-Asıl tür `type`/`kind` alanındadır. Yalnız extraction sözleşmesindeki izinli türler kabul edilir.
+Chunk'lar CAR-6 soru kategorilerine ve ilgili araç sistemlerine bağlanır. Extraction kayıtları
+ortak `CaragentEntity` etiketi yanında domain etiketini de taşır: `CaragentComponentEntity`,
+`CaragentSystemEntity`, `CaragentFluidEntity`, `CaragentMaintenanceAction`,
+`CaragentWarningEntity`, `CaragentSymptomEntity`, `CaragentTechnicalValue`,
+`CaragentFeatureEntity` veya `CaragentRecallEntity`. İlişkiler `APPLIES_TO`, `HAS_VALUE`,
+`HAS_INTERVAL`, `WARNS_ABOUT`, `PART_OF`, `REQUIRES`, `INDICATES`, `RESOLVED_BY` ve
+`AFFECTS` native Neo4j türleriyle saklanır.
+
+```mermaid
+graph LR
+    V[Vehicle] -->|HAS_MANUAL| M[Manual]
+    M -->|HAS_PAGE| P[Page]
+    P -->|HAS_CHUNK| C[Chunk]
+    C -->|ANSWERS| Q[QuestionCategory]
+    C -->|ABOUT_SYSTEM| S[QuestionSystem]
+    C -->|SUPPORTS| E[Typed Entity]
+    E -->|APPLIES_TO / HAS_VALUE / ...| E2[Typed Entity]
+    E -->|APPLIES_TO_VEHICLE| V
+```
 
 ## Kullanım
 
@@ -24,9 +40,22 @@ relationship kimliği tekrar gelirse `MERGE` ile güncellenir; kopya oluşmaz. K
 chunk başka araca aitse, endpoint eksikse veya aynı kimlik farklı endpoint/tür/araç için
 kullanılmışsa transaction geri alınır.
 
-Her entity `SUPPORTS` bağlantılarıyla kanıt chunk'larına bağlıdır. Kanıtta `page_id`,
-`page_number`, kaynak URL ve alıntı korunur. Relationship kanıtı JSON olarak ilişki üzerinde
-tutulur.
+Graph şemasını chunklarla birlikte baştan kurmak için:
+
+```powershell
+.\.venv\Scripts\python.exe main.py rebuild-graph `
+  data/processed/toyota-corolla-le-2024.json `
+  data/processed/entity-extraction.json
+```
+
+Bu komut silme işleminden önce v2 şemasını ve her extraction kanıtının manifestteki yeni chunk
+kimliği, araç, sayfa ve URL ile eşleştiğini doğrular. Ardından yalnız `Caragent*` etiketli node'ları
+silip kaynak zincirini ve domain grafını yeniden oluşturur.
+
+Her entity `SUPPORTS` bağlantılarıyla kanıt chunk'larına ve `APPLIES_TO_VEHICLE` ile aracına
+bağlıdır. Entity üzerinde `type`, kanonik ad, model/yıl, confidence, status, soru kategorileri,
+sistemler, öncelik ve tipe özel `attributes_json` tutulur. Kanıtta `page_id`, `page_number`,
+kaynak URL ve alıntı korunur. Relationship kanıtı JSON olarak ilişki üzerinde tutulur.
 
 ## Bağlantı ayarları
 
@@ -47,6 +76,6 @@ güvenlidir.
 `GraphStore.search` bütün kullanıcı değerlerini Cypher parametresi olarak geçirir. Arama en az
 bir araç, model/yıl veya kılavuz filtresi gerektirir; ayrıca sayfa filtresi uygulanabilir. Her
 sonuç chunk, sayfa, kılavuz ve araç kimlikleriyle birlikte kaynak URL, sayfa numarası ve eşleşme
-nedenini döndürür. Sonuç limiti 1–10 arasındadır.
-
-Bu görev domain'e özel kesin graph şeması, vector index veya LLM davranışını değiştirmez.
+nedenini döndürür. CAR-6 kategori/sistem eşleşmeleri full-text skorunu yükseltir; `NEXT`,
+`MENTIONS`, `ANSWERS` ve `ABOUT_SYSTEM` komşulukları bağlam genişletmede kullanılabilir.
+Sonuç limiti 1–10 arasındadır.
