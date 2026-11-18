@@ -5,7 +5,6 @@ from pathlib import Path
 from urllib.parse import urljoin, urlsplit, unquote, quote, urlunsplit
 from urllib.robotparser import RobotFileParser
 import json
-import posixpath
 import threading
 import time
 
@@ -89,11 +88,21 @@ def request_with_retries(client, url: str, timeout: float, retries: int, backoff
 
 def canonical_url(url: str) -> str:
     p = urlsplit(url)
-    decoded = unquote(p.path)
-    normalized = posixpath.normpath(decoded)
-    if decoded.endswith("/") and not normalized.endswith("/"):
-        normalized += "/"
-    path = quote(normalized, safe="/")
+    # Normalize segment by segment: Lemon titles such as "A/C" are encoded as %2F and must
+    # stay inside their segment instead of becoming an extra directory level.
+    segments = []
+    for raw in p.path.split("/"):
+        segment = unquote(raw)
+        if segment in {"", "."}:
+            continue
+        if segment == "..":
+            if segments:
+                segments.pop()
+            continue
+        segments.append(quote(segment, safe=""))
+    path = "/" + "/".join(segments)
+    if segments and p.path.endswith("/"):
+        path += "/"
     return urlunsplit((p.scheme.lower(), p.netloc.lower(), path, "", ""))
 
 
@@ -107,6 +116,39 @@ def is_crawlable_directory(url: str, root: str) -> bool:
     path = unquote(urlsplit(url).path)
     return (in_scope(url, root) and path.endswith("/")
             and "/Repair and Diagnosis (Single Page)/" not in path)
+
+
+def _span(cell, name: str) -> int:
+    try:
+        return max(1, int(cell.get(name, 1)))
+    except ValueError:
+        return 1
+
+
+def _table_rows(table) -> list[list[str]]:
+    """Repeat rowspan cells on every covered row so each flattened row is self-contained."""
+    rows, pending = [], {}
+    for row in table.find_all("tr"):
+        cells, column = [], 0
+        for cell in row.find_all(["th", "td"], recursive=False):
+            while column in pending:
+                text, width, remaining = pending[column]
+                cells.append(text)
+                pending[column] = (text, width, remaining - 1)
+                column += width
+            text, width = cell.get_text(" ", strip=True), _span(cell, "colspan")
+            cells.append(text)
+            if _span(cell, "rowspan") > 1:
+                pending[column] = (text, width, _span(cell, "rowspan") - 1)
+            column += width
+        while column in pending:
+            text, width, remaining = pending[column]
+            cells.append(text)
+            pending[column] = (text, width, remaining - 1)
+            column += width
+        pending = {key: value for key, value in pending.items() if value[2] > 0}
+        rows.append(cells)
+    return rows
 
 
 def parse_html(html: str, url: str) -> tuple[Page | None, list[str]]:
@@ -123,9 +165,7 @@ def parse_html(html: str, url: str) -> tuple[Page | None, list[str]]:
         tag.decompose()
     # Flatten tables by row; preserve the association between labels and values.
     for table in body.find_all("table"):
-        rows = [" | ".join(cell.get_text(" ", strip=True)
-                           for cell in row.find_all(["th", "td"], recursive=False))
-                for row in table.find_all("tr")]
+        rows = [" | ".join(cells) for cells in _table_rows(table)]
         table.replace_with("\n" + "\n".join(r for r in rows if r) + "\n")
     # Lemon directory pages contain a list of links, whereas articles have divs/tables.
     directory = body.find("ul", recursive=False) is not None

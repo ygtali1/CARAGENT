@@ -75,6 +75,50 @@ def test_overlap_is_bounded_and_preserves_shared_context():
         assert 0 < shared <= 35
 
 
+TABLE_HEADER = "Description | Part Tightened | N*m | kgf*cm | ft.*lbf"
+TABLE_ROWS = [f"AIR CONDITIONING UNIT | Bracket {i} x Vehicle body (Bolt {i}) | {i + 5}.5 N*m | "
+              f"{i + 50} kgf*cm | {i + 3} ft.*lbf" for i in range(30)]
+
+
+def test_table_chunks_never_start_mid_row_and_repeat_the_header():
+    text = "TORQUE SPECIFICATIONS\n" + TABLE_HEADER + "\n" + "\n".join(TABLE_ROWS)
+    chunks = split_text(text, size=400, overlap=120)
+    assert len(chunks) > 3
+    assert all(len(chunk) <= 400 for chunk in chunks)
+    for chunk in chunks[1:]:
+        lines = chunk.splitlines()
+        assert lines[0] == TABLE_HEADER
+        assert all(line in TABLE_ROWS for line in lines[1:])
+    combined = "\n".join(chunks)
+    assert all(row in combined for row in TABLE_ROWS)
+
+
+def test_table_overlap_repeats_whole_rows_within_budget():
+    text = TABLE_HEADER + "\n" + "\n".join(TABLE_ROWS)
+    chunks = split_text(text, size=400, overlap=120)
+    for left, right in zip(chunks, chunks[1:]):
+        shared = right.splitlines()[1]
+        assert shared == left.splitlines()[-1]
+        assert len(shared) <= 120
+    without_overlap = split_text(text, size=400, overlap=0)
+    for left, right in zip(without_overlap, without_overlap[1:]):
+        assert right.splitlines()[1] not in left
+
+
+def test_table_header_is_not_left_alone_at_chunk_end():
+    text = ("Intro sentence for the torque table. " * 7).strip() + "\n" + TABLE_HEADER + "\n" + "\n".join(TABLE_ROWS[:4])
+    chunks = split_text(text, size=400, overlap=0)
+    assert all(chunk.splitlines()[-1] != TABLE_HEADER for chunk in chunks)
+
+
+def test_rows_with_digits_are_not_mistaken_for_table_header():
+    rows = [f"Refrigerant charge volume (variant {i}) | 440 to 500 g (15.6 to 17.6 oz)" for i in range(12)]
+    chunks = split_text("\n".join(rows), size=300, overlap=0)
+    assert len(chunks) > 1
+    assert all(line in rows for chunk in chunks for line in chunk.splitlines())
+    assert sum(chunk.count(rows[0]) for chunk in chunks) == 1
+
+
 @pytest.mark.parametrize("text", [
     "Motor yağı seviyesini kontrol edin. Aracı düz zemine park edin.",
     "Check the engine oil level. Park the vehicle on level ground.",
@@ -117,7 +161,7 @@ def test_chunks_are_enriched_with_car6_question_context():
         item.question_categories)
     assert {"tires_tpms", "driver_assistance"} <= set(item.systems)
     assert item.priority == "P0"
-    assert "question-aware-v5" in ChunkingConfig().signature
+    assert "question-aware-v6" in ChunkingConfig().signature
 
 
 def test_invalid_chunk_settings_are_rejected():
