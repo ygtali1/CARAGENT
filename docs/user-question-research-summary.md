@@ -112,6 +112,16 @@ Aynı model farklı ülkelerde farklı motor, donanım ve kurallarla satılabili
 1. Şehir içinde yakıt tüketimi beklenenden yüksekse neleri kontrol etmeliyim? *[kullanıcı]*
 2. Hızlanırken motorun sabit yüksek devirde kalması normal mi? *[kullanıcı]*
 
+### 2.10 Kaynağı bilinmeyen belirtiler
+
+Kullanıcı bir ses, titreşim veya koku fark eder ama hangi parçadan geldiğini bilmez. Bu sorulara hemen
+cevap verilemez. Önce sorunun ne zaman ve nerede ortaya çıktığı netleştirilmelidir.
+
+1. Arabadan gıcırtı sesi geliyor ama nereden geldiğini anlamadım. Ne olabilir? *[senaryo]*
+2. Belli bir hızın üstünde araç titriyor, neden olabilir? *[senaryo]*
+3. Göstergede turuncu bir ışık yandı, adını bilmiyorum. Ne anlama geliyor? *[senaryo]*
+4. Araçtan yanık kokusu geliyor ama nereden geldiğini bilmiyorum. *[senaryo]*
+
 ## 3. Hangi sorulara önce odaklanmalıyız?
 
 Bu sıralama, yanlış bir cevabın kullanıcıya verebileceği zarara göre yapıldı. Soruların ne sıklıkla
@@ -128,6 +138,9 @@ bazı sorularda bu öneriden farklıdır; ayrıntısı teknik raporda yer alır.
 Örneğin hibrit sistem uyarısı benzinli Corolla LE'de bulunmaz. Ancak hibrit araç kullanan biri için
 güvenlik açısından kritiktir. Sistem bu durumda soruyu önemsiz saymamalı; sorunun bu araç için geçerli
 olmadığını açıkça söylemelidir.
+
+**Kaynağı bilinmeyen belirtiler:** Bu soruların riski baştan bilinmez. Aynı gıcırtı bir kapı fitilinden de
+fren balatasından da gelebilir. Bu yüzden belirti netleşene kadar soru 1. gruptaymış gibi ele alınmalıdır.
 
 ## 4. Takip sorusu örnekleri
 
@@ -175,6 +188,15 @@ beklenen davranış gösterilmiştir.
 | 2020 modelde de aynı mı? | Kullanıcı başka bir model yılını soruyor; seçili araç 2024 olduğu için bu fark açıkça belirtilmeli, gerekirse araç seçimi değiştirilmeli |
 | Hibritte? | Konu hâlâ bakım aralığı; hibrit modelin farklı olabileceği belirtilmeli |
 
+**Örnek 6: Kaynağı bilinmeyen bir belirtiyi netleştirme**
+
+| Kullanıcı | Beklenen davranış |
+|---|---|
+| Arabadan gıcırtı geliyor, ne olduğunu anlamadım. | Hangi parça olduğu belli değil; teşhis koymadan önce güvenlikle ilgili sorular (fren hissi, uyarı ışığı) ve sesin ne zaman çıktığı sorulmalı |
+| Fren yapınca oluyor galiba. | Konu artık fren; soru güvenlik açısından kritik hale gelir |
+| Peki sürebilir miyim? | Önce aracın kullanılıp kullanılamayacağı ele alınmalı, sonra servise yönlendirilmeli; kesin teşhis konmamalı |
+| Ön taraftan geliyor. | Bu bilgi önceki bilgilere eklenmeli; olasılıklar ön frene daraltılmalı |
+
 ## 5. Doğru cevap için hangi araç bilgileri gerekir?
 
 Aynı soru, farklı araçlar için farklı doğru cevaplara sahip olabilir. Aşağıdaki bilgilerin **hepsi her
@@ -202,6 +224,7 @@ bölümlerden örnek sayfalar okundu.
 | "Aracı kullanmaya devam etmeli miyim?" gibi sürücü kararları; bakım aralıkları; akü takviyesi, ekran ayarları gibi günlük kullanım; Türkiye ve Avrupa pazarına özel bilgiler | **İncelenen içerikte bulunamadı.** Bu sorular için kullanım kılavuzu, bakım planı veya ilgili ülkenin belgeleri gerekir |
 | İşçilik süreleri ve geri çağırma kayıtları | **Kılavuzda yalnızca başka bir varyant (Corolla Hybrid LE) için var.** Bu bilgiler benzinli Corolla LE için kullanılamaz |
 | Hibrit sisteme özgü sorular | **Benzinli Corolla LE için geçerli değil.** Hibrit araç seçildiğinde ayrıca ele alınmalıdır |
+| Kaynağı bilinmeyen belirtiler (ses, titreşim, aracın bir yana çekmesi) | **Kısmen destekliyor.** Kılavuzda belirtilerin olası nedenlerini gösteren tablolar var, ancak her tablo bir sistemin (fren, direksiyon, süspansiyon) içinde. Sistem bilinmeden doğru tabloya ulaşılamaz. Kılavuzdaki genel müşteri formu, hangi netleştirme sorularının sorulacağı için yol gösterir. Adı bilinmeyen uyarı ışıkları için kullanım kılavuzu gerekir |
 
 **Önemli ayrım:** "İncelenen içerikte bulunamadı" ifadesi, bilginin hiçbir kaynakta olmadığı anlamına
 gelmez. Yalnızca incelenen kılavuz sayfalarında bulunmadığını gösterir.
@@ -209,7 +232,8 @@ gelmez. Yalnızca incelenen kılavuz sayfalarında bulunmadığını gösterir.
 ## 7. Araştırmadan çıkan temel ihtiyaçlar
 
 1. **Güvenlik sorularında kullanıcı önce bir karar bekliyor.** "Aracı kullanabilir miyim?" sorusu teknik
-   teşhisten önce gelir. Teknik servis kılavuzu bu kararı tek başına karşılamaz.
+   teşhisten önce gelir. Teknik servis kılavuzu bu kararı tek başına karşılamaz. Kullanıcı sorunun
+   kaynağını bilmiyorsa, cevaptan önce kısa netleştirme soruları gerekir.
 2. **Doğru cevap aracın kimliğine bağlıdır.** Model yılı tek başına yeterli olmayabilir. Gerektiğinde
    motor, pazar, donanım ve üretim tarihi bilinmeli; bilinmiyorsa kullanıcıya sorulmalı ya da cevabın
    hangi araç için geçerli olduğu belirtilmelidir.
