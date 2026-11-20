@@ -142,7 +142,7 @@ class ChunkingConfig:
 
     @property
     def signature(self) -> str:
-        return f"question-aware-v5-{self.strategy}-{self.size}-{self.overlap}"
+        return f"question-aware-v6-{self.strategy}-{self.size}-{self.overlap}"
 
 
 CHUNK_DEFAULTS = {
@@ -297,7 +297,28 @@ def _looks_like_heading(block: str) -> bool:
     )
 
 
-def _preferred_end(text: str, start: int, size: int) -> int:
+def _table_headers(text: str) -> list[tuple[int, int, str]]:
+    """Return (header_start, table_end, header) for flattened tables with a textual header row."""
+    tables, offset, block = [], 0, []
+    for line in text.split("\n") + [""]:
+        if "|" in line:
+            block.append((offset, line))
+        else:
+            if len(block) > 1:
+                start, header = block[0]
+                if not any(character.isdigit() for character in header):
+                    tables.append((start, block[-1][0] + len(block[-1][1]), header))
+            block = []
+        offset += len(line) + 1
+    return tables
+
+
+def _active_header(tables: list[tuple[int, int, str]], start: int) -> str:
+    return next((header for header_start, table_end, header in tables
+                 if header_start < start < table_end), "")
+
+
+def _preferred_end(text: str, start: int, size: int, headers=frozenset()) -> int:
     limit = min(start + size, len(text))
     if limit == len(text):
         return limit
@@ -308,7 +329,7 @@ def _preferred_end(text: str, start: int, size: int) -> int:
         if boundaries:
             boundary = start + boundaries[-1]
             preceding = text[start:boundary - len(marker)].rstrip().split(marker)[-1]
-            if _looks_like_heading(preceding) and len(boundaries) > 1:
+            if (_looks_like_heading(preceding) or preceding in headers) and len(boundaries) > 1:
                 return start + boundaries[-2]
             return boundary
     sentence_boundaries = [minimum + match.end()
@@ -326,6 +347,12 @@ def _overlap_start(text: str, end: int, overlap: int) -> int:
     start = max(0, end - overlap)
     if start == 0:
         return start
+    if text[end - 1] == "\n":
+        # A line break end means table rows or paragraphs: repeat whole lines only, never a row tail.
+        if text[start - 1] == "\n":
+            return start
+        line_start = text.find("\n", start, end - 1)
+        return line_start + 1 if line_start >= 0 else end
     # Begin on a word/line boundary while keeping no more than the requested overlap.
     boundary = re.search(r"\s+", text[start:end])
     return start + boundary.end() if boundary else start
@@ -353,10 +380,18 @@ def split_text(text: str, size=1000, overlap=150, strategy="character") -> list[
     if config.strategy == "paragraph":
         paragraphs = [part.strip() for part in re.split(r"\n+", text) if part.strip()]
         return _window(paragraphs, config.size, config.overlap, "\n")
+    tables = _table_headers(text)
+    header_lines = frozenset(header for _, _, header in tables)
     chunks, start = [], 0
     while start < len(text):
-        end = _preferred_end(text, start, config.size)
+        header = _active_header(tables, start)
+        if len(header) >= config.size // 2:
+            header = ""
+        size = config.size - (len(header) + 1 if header else 0)
+        end = _preferred_end(text, start, size, header_lines)
         piece = text[start:end].strip()
+        if piece and header:
+            piece = header + "\n" + piece
         if piece:
             chunks.append(piece)
         if end == len(text):

@@ -25,6 +25,24 @@ def test_html_tables_keep_values_and_ignore_navigation():
     assert page.images[0].endswith("/test/diagram.png")
 
 
+def test_html_table_rowspan_label_is_repeated_on_every_covered_row():
+    html = '''<div class="main"><h1>Torque Specifications</h1><table>
+    <thead><tr><th>Description</th><th colspan="2">Part Tightened</th><th>N*m</th></tr></thead>
+    <tr><td rowspan="3">AIR CONDITIONING UNIT</td><td colspan="2">Bracket x Body</td><td>25 N*m</td></tr>
+    <tr><td colspan="2">Earth wire</td><td>8.5 N*m</td></tr>
+    <tr><td colspan="2">Relay block holder</td><td>8.0 N*m</td></tr>
+    <tr><td>COMPRESSOR</td><td colspan="2">Compressor x Engine</td><td>25 N*m</td></tr>
+    </table></div>'''
+    page, _ = parse_html(html, "https://lemon-manuals.la/Toyota/2024/Corolla%20LE/torque/")
+    assert page.text.splitlines() == [
+        "Description | Part Tightened | N*m",
+        "AIR CONDITIONING UNIT | Bracket x Body | 25 N*m",
+        "AIR CONDITIONING UNIT | Earth wire | 8.5 N*m",
+        "AIR CONDITIONING UNIT | Relay block holder | 8.0 N*m",
+        "COMPRESSOR | Compressor x Engine | 25 N*m",
+    ]
+
+
 def test_directory_is_not_a_manual():
     page, links = parse_html('<div class="main"><h1>Index</h1><ul><li><a href="Oil/">Oil</a></li></ul></div>',
                              "https://lemon-manuals.la/Toyota/2024/Corolla%20LE/")
@@ -40,6 +58,14 @@ def test_crawler_scope_does_not_escape_toyota_variant():
     assert not in_scope("https://lemon-manuals.la/Toyota/2024/Corolla%20LEX/", root)
     assert not in_scope(root + "%2e%2e/%2e%2e/%2e%2e/Honda/", root)
     assert canonical_url(root + "Oil/#one") == canonical_url(root + "Oil/#two")
+
+
+def test_canonical_url_keeps_encoded_slash_inside_segment():
+    root = "https://lemon-manuals.la/Toyota/2024/Corolla%20LE/"
+    url = root + "Heating%2C%20Ventilation%20%26%20A%2FC%20%28HVAC%29/Service%20%5B06%2F2018%5D/"
+    assert canonical_url(url) == url
+    assert canonical_url(root + "A/./B//C/../D/") == root + "A/B/D/"
+    assert canonical_url(root + "Repair%20and%20Diagnosis/") == root + "Repair%20and%20Diagnosis/"
 
 
 def test_vehicle_root_covers_all_manual_sections_without_duplicate_export():

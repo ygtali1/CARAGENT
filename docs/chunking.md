@@ -33,6 +33,13 @@ Algoritma hiçbir chunk'ı iki farklı sayfaya yaymaz. Varsayılan `character` y
 4. Kelime sonu
 5. Zorunlu karakter sınırı
 
+Chunk bir satır sonunda bitiyorsa overlap yalnız tam satırlardan oluşur; overlap bütçesine tam satır sığmıyorsa
+overlap uygulanmaz. Böylece tablo satırları hiçbir zaman ortadan bölünmez. Düzleştirilmiş bir tablonun ilk satırı
+rakam içermiyorsa başlık satırı kabul edilir ve tablonun ortasından başlayan her chunk'ın başına eklenir; başlık
+satırı bir chunk'ın sonunda yalnız bırakılmaz. HTML parse sırasında `rowspan` hücreleri kapsadıkları her satıra
+tekrar yazılır (`AIR CONDITIONING UNIT | Earth wire | 8.5 N*m`), böylece her tablo satırı kendi başına anlamlıdır.
+Tüm tabloyu kaplayan tek hücreli bölüm satırları (`Brakes`, `Battery`) henüz sonraki satırlara taşınmaz.
+
 Kısa büyük-harfli başlıklar, Markdown başlıkları ve iki nokta ile biten başlıklar mümkün olduğunda sonraki paragrafla birlikte tutulur. Numaralı işlem adımlarındaki `1.` gibi işaretler cümle sonu kabul edilmez. Arka arkaya tekrar eden aynı çıkarım satırları temizlenir; Türkçe ve İngilizce Unicode metinleri korunur.
 
 ## Kaynak izlenebilirliği
@@ -49,7 +56,7 @@ Her `Chunk` aşağıdaki alanları taşır:
 - Soru önceliği (`P0`, `P1` veya `P2`)
 
 Aynı girdi ve ayarlar aynı chunk metinlerini, sırasını, sınıflandırmasını ve kimliklerini üretir.
-Chunk imzası `question-aware-v5` sürümünü içerir; böylece eski sınıflandırma ve kategorisiz chunk'lar yeni
+Chunk imzası `question-aware-v6` sürümünü içerir; böylece eski sınıflandırma ve kategorisiz chunk'lar yeni
 extraction kanıtlarıyla yanlışlıkla eşleşmez. Ayar veya sınıflandırma sürümü değiştiğinde chunk
 kimlikleri ve kılavuzun ingest içerik özeti de değişir.
 
