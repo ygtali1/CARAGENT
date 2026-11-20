@@ -9,6 +9,8 @@
 > **v2.1 güncellemesi (2026-11-17):** N01–N44 soruları, yerel Lemon arşivinin gerçek içeriğiyle tek tek
 > karşılaştırıldı (§0B, §2.5–§2.7, §3.5). Teknik uygulama önerileri Ek A'da, sayım ve ölçüm yöntemi
 > Ek B'dedir. Kod ölçümleri commit `bdd4d31` üzerinde yeniden yapıldı (§2.4).
+> **v2.2 güncellemesi (2026-11-19):** Kullanıcının sorunun kaynağını bilmediği belirti tabanlı sorular
+> eklendi (BL01–BL07, C15; §2.8). Bu sorular önceki bölümlerin sayımlarına dahil değildir.
 
 ## Özet
 
@@ -193,6 +195,7 @@ Yeni ana kategori açılmaz. Lemon ve pazar kaynaklı soru tipleri mevcut katego
 | İşçilik süresi (Labor Times) | Parçanın ana kategorisi | Labor Times | N23, N24 |
 | Kritik uyarı triyajı | `warnings` / `safety_recalls` | Owner Manual | N01–N06, N09, N11 |
 | Pazar ve varyant karşılaştırması | Konunun ana kategorisi | Owner Manual (çok pazar) | N31–N36 |
+| Belirti tabanlı, kaynağı bilinmeyen sorular (v2.2) | `warnings` / `tires_brakes` | Repair & Diagnosis (belirti tabloları), Owner Manual | BL01–BL07 (§2.8) |
 
 ---
 
@@ -578,6 +581,99 @@ sayfadadır; cevap değeri burada tekrar edilmez, yalnızca kanıt yeri gösteri
 | L11 | Lastikleri değiştirirken TPMS sensör kimliğini neden önceden not etmeliyim? | tires_brakes | `pages/34061.html`: Registration [03/2023 - ] › Procedure | Type B TPMS |
 | L12 | Radyatör kapağının açılma basıncı ne olmalı? | maintenance | `pages/467.html`: QL › Common Specs (M20A-FKS) | M20A-FKS; teknisyen sorusu |
 
+### 2.8 Belirti tabanlı sorular: kullanıcı sorunun kaynağını bilmiyor (BL01–BL07, v2.2)
+
+N ve L soruları, kullanıcının parçayı, sistemi veya uyarının adını bildiğini varsayar. C08 de belirtinin
+yerini verir ("Direksiyondan tık sesi geliyor"). Bu bölüm, kullanıcının **yalnızca belirtiyi** tarif ettiği
+soruları ekler: kaynağını bilmediği bir ses, titreşim, koku, aracın bir yana çekmesi ya da adını bilmediği
+bir uyarı ışığı.
+
+**Neden ayrı bir alt kategori:**
+
+- **Arama parça adına dayanıyor.** Sınıflama ve arama, sorudaki parça veya sistem adıyla çalışıyor
+  (`components()`, `QUESTION_SYSTEMS`). Bu sorularda böyle bir ad yok.
+- **Risk baştan bilinmiyor.** Aynı "gıcırtı" bir kapı fitilinden de, fren balatasından da gelebilir.
+  Öncelik ancak netleştirmeden sonra belirlenebilir.
+- **Tek turda cevaplanamıyor.** Cevaptan önce netleştirme soruları gerekiyor.
+
+**Kapsam ve sınırlar:**
+
+- **Köken:** BL soruları ve C15 zinciri araştırmacı tarafından tasarlandı (§2.6'daki N soruları gibi).
+  Kullanıcı ihtiyacı sinyali bu turda aranmadı.
+- **Sayımlar:** BL01–BL07 ve C15, §2.1–§2.7, §3.5 ve Ek B'deki sayımlara **dahil değildir**. O sayımlar
+  N01–N44 ve C01–C14 için olduğu gibi geçerlidir.
+- **Planner ölçümü yapılmadı.** Bu turda proje Python ortamı bulunmadığı için BL soruları ve C15 §2.4'teki
+  yöntemle ölçülmedi. "Planner" ve "Mevcut" sütunları bu yüzden "ölçülmedi" olarak işaretlendi.
+- **Arşiv incelemesi:** §0B'deki yerel arşivde yapıldı. Önce tam ağaçtaki (`pages/3.html`) 233
+  "Problem Symptoms Table" bağlantısı sistemlere göre eşlendi, ardından ilgili sayfaların metni okundu.
+  Belirti formunun görseli (`images/G50F04595.gif`) incelendi.
+
+#### 2.8.1 Sorular
+
+| ID | Soru | Kategori | Amaç | Sistem (aday) | Kaynak | ⚑ | Araştırma önceliği | Planner |
+|---|---|---|---|---|---|---|---|---|
+| BL01 | Arabadan gıcırtı sesi geliyor ama nereden geldiğini anlamadım. Ne olabilir? | warnings | diagnosis | Bilinmiyor (aday: brakes, steering, tires_tpms, body, süspansiyon) | R&D, OM | — | P0, netleşene kadar | ölçülmedi |
+| BL02 | Fren yapınca cızırtı sesi geliyor, sürmeye devam edebilir miyim? | tires_brakes | triage | brakes | R&D, OM | D | P0 | ölçülmedi |
+| BL03 | Araç dururken direksiyonu yavaşça çevirince ince bir ses çıkıyor, normal mi? | warnings | diagnosis | steering | R&D | — | P1; direksiyon ağırlaşırsa P0 | ölçülmedi |
+| BL04 | Belli bir hızın üstünde araç titriyor, neden olabilir? | warnings | diagnosis | Bilinmiyor (aday: tires_tpms, brakes, süspansiyon, aks) | R&D | — | P0, netleşene kadar | ölçülmedi |
+| BL05 | Araç düz yolda bir tarafa çekiyor, neyi kontrol etmeliyim? | tires_brakes | diagnosis | tires_tpms, brakes, steering, süspansiyon | R&D | — | P0 | ölçülmedi |
+| BL06 | Göstergede turuncu bir ışık yandı, adını bilmiyorum. Ne anlama geliyor? | warnings | triage | Bilinmiyor | OM | D, P | P0, netleşene kadar | ölçülmedi |
+| BL07 | Araçtan yanık kokusu geliyor ama nereden geldiğini bilmiyorum. | warnings | triage | Bilinmiyor (aday: brakes, engine, charging) | OM | — | P0 | ölçülmedi |
+
+**Notlar:**
+
+- **N06 ile farkı:** N06'da koku tipi (yakıt) ve sistem belli. BL07'de ikisi de belli değil.
+- **"Süspansiyon" ve "aks"** §1.2'deki sistem listesinde yok. Aday sistem olarak açık adla yazıldı.
+
+#### 2.8.2 Yerel Lemon arşiviyle karşılaştırma
+
+Durum işaretleri §2.5'tekiyle aynıdır.
+
+| ID | Durum | Yerel kaynakta bulunan | Sayfa ve bölüm | Araç / varyant koşulu |
+|---|---|---|---|---|
+| BL01 | ◐ | Araca özel belirti tabloları **sisteme göre** ayrılmış; sistem bilinmeden doğru tabloya girilemiyor. Markaya özgü olmayan bir müşteri belirti formu var: ses ve koku için serbest açıklama; sıklık, gün içi zaman, motor sıcaklığı, araç hızı, sürüş koşulu (dönerken, frenlerken, hızlanırken, bozuk yolda) ve hava durumu seçenekleri. Formda sesin **konumu** sorulmuyor | `pages/28079.html` (görsel `images/G50F04595.gif`): General Information › Check Lists › Symptom Check List Worksheet › Condensed Version; amaç: `pages/28077.html` | Genel bilgi: "does not apply specifically to one make or model" (`pages/28075.html`). **Netleştirme sorusu için kaynak, cevap için değil** |
+| BL02 | ◐ | "Noise from brakes" belirtisi benzinli fren sisteminin belirti tablosunda var, ancak bulunan sayfa 2024 aralığında değil. 2024 aralığında balata aşınma ikazı plakası (wear indicator plate) yalnızca parça olarak var; sürücü eylemi yok | `pages/10711.html`: Brakes › Brake System (Except HEV) - Inspection › Problem Symptoms Table [01/2019 - 09/2022]; `pages/10754.html`: FRONT DISC BRAKE PAD (except 4-Pot Caliper) › Components [09/2022 - ] | Kaliper tipine bağlı. Sürüş kararı için **farklı kaynak: Owner Manual** |
+| BL03 | ◐ | İki belirti satırı var: düşük hızda dönerken sürtünme sesi ve araç dururken direksiyon yavaş çevrilince tiz ses (squeaking). Şüpheli parçalar: direksiyon motoru (EPS ECU ve motor), direksiyon kolonu, direksiyon simidinin yanlış montajı. "Normal mi?" sorusunun kullanıcıya yönelik cevabı yok | `pages/32996.html`: Steering › Power Steering › Steering System - Inspection And Adjustment › Problem Symptoms Table [11/2022 - ] | Benzinli |
+| BL04 | ◐ | Tekerlek salgısı (wheel shimmy) için ön süspansiyon tablosunda alt salıncak, amortisör, porya rulmanı; aks tablosunda aşınmış ön aks mili (M20A-FKS). Genel sayfada titreşim türleri var. Hız aralığına göre ayrım incelenen sayfalarda bulunamadı | `pages/33281.html`: Suspension › Front Suspension › Problem Symptoms Table [09/2022 - ]; `pages/12957.html`: Drivelines & Axles › Drive Shaft System › Problem Symptoms Table [11/2022 - ]; `pages/27753.html` (genel) | M20A-FKS; genel sayfa markaya özgü değil |
+| BL05 | ◐ | "Vehicle pulls to one side" için ön tabloda lastik (aşınma, basınç), ön rot ayarı, porya rulmanı, amortisör, direksiyon kutusu, süspansiyon parçaları; arka tabloda arka rot ayarı, arka porya, amortisör, helezon yay. "Brake pull" yalnızca 2024 aralığında olmayan fren tablosunda. Sürücü eylemi yok | `pages/33281.html` [09/2022 - ]; `pages/33298.html` [11/2022 - 09/2024], `pages/33299.html` [09/2024 - ]: Suspension › Rear Suspension › Problem Symptoms Table; `pages/10711.html` | Arka porya, EPB'li/EPB'siz ayrılıyor |
+| BL06 | ✖ | Uyarı ışığı sembol listesi bulunamadı. Yalnızca genel bir "Indicator Lights" kontrol tablosu ve tek tek uyarı ışıklarının teşhis sayfaları var | `pages/28434.html`: General Information › Electrical › Indicator Lights | **Farklı kaynak: Owner Manual** |
+| BL07 | ✖ | İncelenen belirti tablolarında yanık kokusu için sistem eşleşmesi bulunamadı. Genel formda koku için yalnızca serbest açıklama alanı var. Tam metin araması yapılmadı | `pages/28079.html` | **Farklı kaynak: Owner Manual** |
+
+**Bulgu:** Kılavuz **sistemden belirtiye** gidiyor, belirtiden sisteme değil. 233 belirti tablosu sayfasının
+her biri bir sistem ağacının içinde. Bu yüzden belirti sorusunda önce sistemin daraltılması gerekir.
+Markaya özgü olmayan belirti formu, hangi netleştirme sorularının sorulacağı için iyi bir çerçeve verir.
+Ancak belirtiyi sisteme bağlamaz.
+
+#### 2.8.3 Beklenen davranış
+
+1. **Güvenlik eleği:** Fren hissi, direksiyon, yanan uyarı ışığı, duman veya koku soruları. Bunlardan biri
+   varsa soru S1 akışına (§4.1) geçer.
+2. **Netleştirme:** Belirti formundaki eksenler (ne zaman, hangi hızda, motor soğuk mu sıcak mı, ne sıklıkla,
+   hangi sürüş koşulunda) ve araştırmacının eklediği konum sorusu (ön/arka, sağ/sol, tekerlek, motor
+   bölmesi, direksiyon). Tek mesajda yalnızca birkaç soru sorulmalı.
+3. **Daraltma:** Sistem belli olunca ilgili belirti tablosuna gidilir. Kılavuz şüpheli parçaları olasılık
+   sırasına göre veriyor; cevap bunları "kesin değil" diye sunmalı.
+4. **Servis yönlendirmesi:** Kesin teşhis iddiası yok.
+
+#### 2.8.4 Takip zinciri (C15)
+
+**BT:** belirti netleştirme. Diğer tür kısaltmaları §2.2'dedir.
+
+| Zincir | Tür | Tur | Kullanıcı mesajı | Beklenen davranış | Mevcut |
+|---|---|---|---|---|---|
+| **C15** | BT, BK, P0↑ | 1 | Arabadan gıcırtı geliyor, ne olduğunu anlamadım. | Sistem bilinmiyor; teşhis koymadan güvenlik eleği ve netleştirme soruları | ölçülmedi |
+| | | 2 | Fren yapınca oluyor galiba. | Belirti bağlamı korunur; sistem = brakes; öncelik P0'a çıkar | ölçülmedi |
+| | | 3 | Peki sürebilir miyim? | Önce sürüş kararı (S1), sonra servis önerisi; kesin teşhis yok | ölçülmedi |
+| | | 4 | Ön taraftan geliyor. | Konum bilgisi bağlama eklenir; ön frene daraltılır; kaliper tipi ⚑D | ölçülmedi |
+
+#### 2.8.5 Sonraki çalışma için gereksinimler
+
+- **Belirti ve koşul birlikte tutulmalı.** Mevcut `indicates` ilişkisi belirtiyi parçaya bağlıyor; "frenlerken",
+  "dönerken" gibi koşullar taşınmıyor (§4.3).
+- **Konuşma durumu belirti özelliklerini biriktirmeli:** koşul, konum, hız, sıklık.
+- **Sistem sözlüğünde süspansiyon ve aks yok** (§1.2).
+- **Ölçüm:** BL01–BL07 ve C15, §2.4'teki yöntemle ölçülmeli.
+
 ---
 
 ## 3. Önceliklendirme raporu (P0–P2)
@@ -651,6 +747,7 @@ değerlendirmeye alınmalıdır. Hibrit sistem uyarısı yalnızca hibrit araç 
 | Hibrit sistem uyarısı (yalnızca hibrit araçta) | `hybrid_system` | N05 |
 | Güvenliği etkileyen teknik değer | bijon, fren kaliperi/braket torku, fren limitleri | N18, N19, N20 |
 | Direksiyon kaybı veya recall | `steering` + recall (mevcut) | N11, C08 |
+| Kaynağı bilinmeyen belirti (v2.2) | Sistem yok; ses, titreşim, koku, çekme, adı bilinmeyen ışık | BL01–BL07, C15 |
 
 ### 3.5 Araştırmanın önerdiği öncelik ve koddaki öncelik (v2.1)
 
@@ -709,6 +806,7 @@ sütunda verilir. Kapsam dışı olmak riski düşürmez.
 | S6 | **Varyant/pazar çözümleme** | ⚑ işaretli soru, bilinmeyen varyant | Çok pazarlı kılavuz kapsamı | Netleştirme sorusu veya cevabı kaynak pazarıyla etiketleme | N31–N36, C06 |
 | S7 | **Recall sorgulama** | recall_lookup | Recall kaydı + VIN | Uygunluğu kesinleştirmeme; pazara göre VIN sorgu kanalı | N07, C08 |
 | S8 | **Çok turlu konuşma** | Eliptik takip, konu değişimi | Konuşma durumu | Kök soru ve varyant korunur; konu değişiminde bağlam bırakılır | C01–C14 |
+| S9 | **Belirti netleştirme** (v2.2) | Belirti var, sistem veya uyarı adı yok | Sisteme göre belirti tabloları; genel belirti formu | Önce güvenlik eleği (gerekirse S1), sonra netleştirme soruları, sonra olası nedenler "kesin değil" ibaresiyle | BL01–BL07, C15 |
 
 ### 4.2 Varlık gereksinimleri
 
